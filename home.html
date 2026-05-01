@@ -13,10 +13,15 @@
 
 <body>
 
+  <!-- BACKGROUND FX -->
+  <div class="app-bg"></div>
+
   <!-- NAVBAR -->
   <header class="navbar">
 
-    <a href="home.html" class="logo">VINYL</a>
+    <a href="home.html" class="logo" aria-label="Ir para home">
+      VINYL
+    </a>
 
     <nav class="navbar-links" id="navbarLinks">
       <a href="home.html" class="active">Home</a>
@@ -61,6 +66,8 @@
 
       <section class="sidebar-card profile-summary-card">
 
+        <div class="profile-glow"></div>
+
         <img
           class="profile-summary-avatar"
           src="https://placehold.co/300x300/111111/ff4d6d?text=VINYL"
@@ -93,10 +100,35 @@
         <h3>Atalhos</h3>
 
         <div class="shortcut-list">
-          <a href="search.html">Buscar músicas</a>
-          <a href="timeline.html">Timeline</a>
-          <a href="messages.html">Mensagens</a>
-          <a href="profile.html">Editar perfil</a>
+          <a href="search.html">
+            <span>🔎</span>
+            Buscar músicas
+          </a>
+
+          <a href="timeline.html">
+            <span>⚡</span>
+            Timeline
+          </a>
+
+          <a href="messages.html">
+            <span>💬</span>
+            Mensagens
+          </a>
+
+          <a href="profile.html">
+            <span>✏️</span>
+            Editar perfil
+          </a>
+        </div>
+      </section>
+
+      <section class="sidebar-card mini-trends-card">
+        <h3>Em alta</h3>
+
+        <div class="trend-list">
+          <a href="search.html?q=SZA">#SZA</a>
+          <a href="search.html?q=The Weeknd">#TheWeeknd</a>
+          <a href="search.html?q=Frank Ocean">#FrankOcean</a>
         </div>
       </section>
 
@@ -105,20 +137,60 @@
     <!-- FEED CENTRAL -->
     <section class="main-feed">
 
+      <!-- HERO -->
       <section class="welcome-card">
-        <div>
+
+        <div class="welcome-content">
           <span class="eyebrow">Bem-vindo ao Vinyl</span>
-          <h1>Compartilhe sua vibe musical.</h1>
+
+          <h1>
+            Compartilhe sua
+            <span>vibe musical.</span>
+          </h1>
+
           <p>
-            Poste reviews, favorite artistas e descubra o que a galera está ouvindo.
+            Poste reviews, favorite artistas, descubra sons novos e veja o que sua comunidade está ouvindo.
           </p>
+
+          <div class="hero-actions">
+            <a href="#postForm" class="hero-primary">Criar post</a>
+            <a href="search.html" class="hero-secondary">Explorar catálogo</a>
+          </div>
+
+          <div class="hero-stats">
+            <div>
+              <strong id="heroPostsCount">0</strong>
+              <span>posts</span>
+            </div>
+
+            <div>
+              <strong id="heroUsersCount">0</strong>
+              <span>usuários</span>
+            </div>
+
+            <div>
+              <strong id="heroSongsCount">0</strong>
+              <span>sons</span>
+            </div>
+          </div>
         </div>
+
+        <div class="hero-vinyl" aria-hidden="true">
+          <div class="vinyl-disc">
+            <div class="vinyl-center"></div>
+          </div>
+        </div>
+
       </section>
 
       <!-- STORIES -->
       <section class="stories-section">
+
         <div class="section-header">
-          <h2>Stories</h2>
+          <div>
+            <h2>Stories</h2>
+            <p>Momentos rápidos da comunidade</p>
+          </div>
 
           <button type="button" id="createStoryBtn">
             + Story
@@ -128,6 +200,7 @@
         <div class="stories-list" id="storiesList">
           <p class="empty-state">Carregando stories...</p>
         </div>
+
       </section>
 
       <!-- CRIAR POST -->
@@ -154,11 +227,34 @@
             maxlength="500"
           ></textarea>
 
+          <div class="character-counter">
+            <span id="postCounter">0</span>/500
+          </div>
+
+          <!-- PREVIEW DA MÚSICA/ÁLBUM/ARTISTA ANEXADO -->
+          <div class="attached-music-preview" id="attachedMusicPreview" hidden>
+            <img
+              src="https://placehold.co/160x160/111111/ff4d6d?text=♪"
+              alt="Capa"
+              id="attachedMusicImage"
+            />
+
+            <div class="attached-music-info">
+              <span class="attached-music-type" id="attachedMusicType">Música</span>
+              <strong id="attachedMusicTitle">Nome da música</strong>
+              <p id="attachedMusicSubtitle">Artista</p>
+            </div>
+
+            <button type="button" id="removeAttachedMusicBtn" aria-label="Remover música">
+              ×
+            </button>
+          </div>
+
           <div class="composer-footer">
 
             <div class="composer-tools">
               <button type="button" id="addMusicBtn">
-                ♪ Música
+                ♪ Anexar música
               </button>
 
               <button type="button" id="addImageBtn">
@@ -180,7 +276,10 @@
       <section class="feed-section">
 
         <div class="section-header">
-          <h2>Feed</h2>
+          <div>
+            <h2>Feed</h2>
+            <p>O que está rolando agora</p>
+          </div>
 
           <select id="feedFilter" aria-label="Filtro do feed">
             <option value="recent">Recentes</option>
@@ -227,6 +326,14 @@
           <p class="empty-state">
             Conecte seu Spotify para mostrar sua música atual.
           </p>
+        </div>
+      </section>
+
+      <section class="sidebar-card">
+        <h3>Reviews populares</h3>
+
+        <div id="popularReviewsBox" class="popular-reviews-box">
+          <p class="empty-state">Nenhum review popular ainda.</p>
         </div>
       </section>
 
@@ -307,6 +414,51 @@
 
   </div>
 
+  <!-- MODAL DE ANEXAR MÚSICA -->
+  <div class="music-picker-modal" id="musicPickerModal" hidden>
+
+    <div class="music-picker-backdrop" id="closeMusicPickerBackdrop"></div>
+
+    <section class="music-picker-panel">
+
+      <header class="music-picker-header">
+        <div>
+          <h2>Anexar ao post</h2>
+          <p>Busque uma música, álbum ou artista para deixar seu post mais Vinyl.</p>
+        </div>
+
+        <button type="button" id="closeMusicPickerBtn" aria-label="Fechar">
+          ×
+        </button>
+      </header>
+
+      <div class="music-picker-tabs">
+        <button type="button" class="active" data-music-type="track">Músicas</button>
+        <button type="button" data-music-type="album">Álbuns</button>
+        <button type="button" data-music-type="artist">Artistas</button>
+      </div>
+
+      <div class="music-picker-search">
+        <input
+          type="text"
+          id="musicPickerInput"
+          placeholder="Busque por SZA, The Weeknd, Frank Ocean..."
+          autocomplete="off"
+        />
+
+        <button type="button" id="musicPickerSearchBtn">
+          Buscar
+        </button>
+      </div>
+
+      <div class="music-picker-results" id="musicPickerResults">
+        <p class="empty-state">Busque algo para anexar ao seu post.</p>
+      </div>
+
+    </section>
+
+  </div>
+
   <!-- CHAT WIDGET -->
   <button type="button" class="chat-widget-button" id="openChatWidgetBtn" aria-label="Abrir mensagens">
     💬
@@ -348,10 +500,7 @@
   <div id="toast" class="toast"></div>
 
   <!-- SCRIPTS -->
-  <script type="module" src="protect.js"></script>
   <script type="module" src="home.js"></script>
-  <script type="module" src="notifications.js"></script>
-  <script type="module" src="chat-widget.js"></script>
 
 </body>
 
