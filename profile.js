@@ -1,74 +1,101 @@
-import { auth, db } from "./firebase.js";
+/* ===============================
+   VINYL PROFILE JS
+   Ajuste o caminho do firebase.js se necessário.
+================================ */
+
+import { auth, db, storage } from "./firebase.js";
 
 import {
   onAuthStateChanged,
   signOut,
-  deleteUser,
-  GoogleAuthProvider,
-  EmailAuthProvider,
-  reauthenticateWithPopup,
-  reauthenticateWithCredential,
-  updateProfile
+  deleteUser
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-  collection,
   doc,
   getDoc,
-  getDocs,
-  query,
-  where,
-  writeBatch,
+  updateDoc,
   setDoc,
   deleteDoc,
-  deleteField,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* =========================
-   ELEMENTOS
-========================= */
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
+/* ===============================
+   ELEMENTOS
+================================ */
+
+const navbarLinks = document.getElementById("navbarLinks");
+const mobileMenuBtn = document.getElementById("mobileMenuBtn");
 const logoutBtn = document.getElementById("logoutBtn");
+
+const profileBanner = document.getElementById("profileBanner");
+const changeBannerBtn = document.getElementById("changeBannerBtn");
+const quickBannerInput = document.getElementById("quickBannerInput");
 
 const profileAvatar = document.getElementById("profileAvatar");
 const profileDisplayName = document.getElementById("profileDisplayName");
 const profileUsername = document.getElementById("profileUsername");
 const profileBio = document.getElementById("profileBio");
 
+const currentTrackText = document.getElementById("currentTrackText");
+const favoriteAlbumText = document.getElementById("favoriteAlbumText");
+const topGenreText = document.getElementById("topGenreText");
+
 const followersCount = document.getElementById("followersCount");
 const followingCount = document.getElementById("followingCount");
 const reviewsCount = document.getElementById("reviewsCount");
 const favoritesCount = document.getElementById("favoritesCount");
 
+const privateProfileBox = document.getElementById("privateProfileBox");
+
 const favoriteGenresList = document.getElementById("favoriteGenresList");
 const favoriteArtistsGrid = document.getElementById("favoriteArtistsGrid");
-const hiddenArtistsGrid = document.getElementById("hiddenArtistsGrid");
 const favoriteAlbumsGrid = document.getElementById("favoriteAlbumsGrid");
-
-const genresSection = document.getElementById("genresSection");
-const artistsSection = document.getElementById("artistsSection");
-const hiddenArtistsSection = document.getElementById("hiddenArtistsSection");
-const albumsSection = document.getElementById("albumsSection");
-const activitySection = document.getElementById("activitySection");
-const reviewsSection = document.getElementById("reviewsSection");
-const privateProfileBox = document.getElementById("privateProfileBox");
 const activityList = document.getElementById("activityList");
+const reviewsList = document.getElementById("reviewsList");
 
-const messageBtn = document.getElementById("messageBtn");
+const summaryTopArtist = document.getElementById("summaryTopArtist");
+const summaryMood = document.getElementById("summaryMood");
+const summaryCompatibility = document.getElementById("summaryCompatibility");
 
 const editProfileBtn = document.getElementById("editProfileBtn");
+const favoritesBtn = document.getElementById("favoritesBtn");
+const shareProfileBtn = document.getElementById("shareProfileBtn");
+
 const editProfileModal = document.getElementById("editProfileModal");
 const closeEditModalBtn = document.getElementById("closeEditModalBtn");
 const editProfileForm = document.getElementById("editProfileForm");
+
 const editDisplayName = document.getElementById("editDisplayName");
 const editUsername = document.getElementById("editUsername");
+const editBio = document.getElementById("editBio");
+const bioCounter = document.getElementById("bioCounter");
+
 const editPhotoFile = document.getElementById("editPhotoFile");
 const editPhotoPreview = document.getElementById("editPhotoPreview");
-const editBio = document.getElementById("editBio");
 
-const openPrivacyModalBtn = document.getElementById("openPrivacyModalBtn");
+const editBannerFile = document.getElementById("editBannerFile");
+const editBannerPreview = document.getElementById("editBannerPreview");
+
+const editCurrentTrack = document.getElementById("editCurrentTrack");
+const editFavoriteArtist = document.getElementById("editFavoriteArtist");
+const editFavoriteAlbum = document.getElementById("editFavoriteAlbum");
+const editTopGenre = document.getElementById("editTopGenre");
+
 const privacyModal = document.getElementById("privacyModal");
+const openPrivacyModalBtn = document.getElementById("openPrivacyModalBtn");
 const closePrivacyModalBtn = document.getElementById("closePrivacyModalBtn");
 const privacyForm = document.getElementById("privacyForm");
 
@@ -78,30 +105,130 @@ const showActivityToggle = document.getElementById("showActivityToggle");
 const showFavoritesToggle = document.getElementById("showFavoritesToggle");
 const showReviewsToggle = document.getElementById("showReviewsToggle");
 const searchableProfileToggle = document.getElementById("searchableProfileToggle");
+
 const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+
+const toast = document.getElementById("toast");
+
+/* ===============================
+   ESTADO
+================================ */
 
 let currentUser = null;
 let currentUserData = null;
-let profileUid = null;
-let isOwnProfile = true;
+let selectedPhotoFile = null;
+let selectedBannerFile = null;
 
-const urlParams = new URLSearchParams(window.location.search);
-const profileUidFromUrl = urlParams.get("uid");
+const fallbackAvatar = "https://placehold.co/300x300/111111/ff4d6d?text=VINYL";
+const fallbackBanner = "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1600&q=80";
+const fallbackCover = "https://placehold.co/300x300/111111/ff4d6d?text=♪";
 
-const DEFAULT_AVATAR = "https://placehold.co/300x300/111111/ff4d6d?text=VINYL";
+/* ===============================
+   HELPERS
+================================ */
 
-const DEFAULT_PRIVACY = {
-  privateProfile: false,
-  allowDirectMessages: true,
-  showActivity: true,
-  showFavorites: true,
-  showReviews: true,
-  searchableProfile: true
-};
+function showToast(message) {
+  if (!toast) return;
 
-/* =========================
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2800);
+}
+
+function safeText(value, fallback = "") {
+  return String(value || fallback)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function setBannerImage(url) {
+  const bannerUrl = url || fallbackBanner;
+
+  if (profileBanner) {
+    profileBanner.style.backgroundImage = `
+      linear-gradient(135deg, rgba(255, 63, 127, .42), rgba(255, 45, 85, .10)),
+      url("${bannerUrl}")
+    `;
+  }
+
+  if (editBannerPreview) {
+    editBannerPreview.style.backgroundImage = `
+      linear-gradient(135deg, rgba(255, 63, 127, .28), rgba(255, 45, 85, .08)),
+      url("${bannerUrl}")
+    `;
+  }
+}
+
+function normalizeUsername(username) {
+  return String(username || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[^a-z0-9._]/g, "");
+}
+
+function getDisplayName(data) {
+  return data?.displayName || data?.name || currentUser?.displayName || "Usuário Vinyl";
+}
+
+function getUsername(data) {
+  return data?.username || currentUser?.email?.split("@")[0] || "usuario";
+}
+
+function getAvatar(data) {
+  return data?.photoURL || data?.avatar || currentUser?.photoURL || fallbackAvatar;
+}
+
+function countArray(value) {
+  return Array.isArray(value) ? value.length : 0;
+}
+
+function formatDate(timestamp) {
+  if (!timestamp) return "agora";
+
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  return date.toLocaleDateString("pt-BR");
+}
+
+async function uploadImage(file, folder) {
+  if (!file || !currentUser) return null;
+
+  const extension = file.name.split(".").pop() || "jpg";
+  const fileName = `${Date.now()}-${Math.random().toString(16).slice(2)}.${extension}`;
+  const storageRef = ref(storage, `${folder}/${currentUser.uid}/${fileName}`);
+
+  await uploadBytes(storageRef, file);
+
+  return await getDownloadURL(storageRef);
+}
+
+/* ===============================
+   NAVBAR
+================================ */
+
+mobileMenuBtn?.addEventListener("click", () => {
+  navbarLinks?.classList.toggle("open");
+});
+
+logoutBtn?.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    window.location.href = "login.html";
+  } catch (error) {
+    console.error(error);
+    showToast("Erro ao sair da conta.");
+  }
+});
+
+/* ===============================
    AUTH
-========================= */
+================================ */
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -111,1113 +238,722 @@ onAuthStateChanged(auth, async (user) => {
 
   currentUser = user;
 
-  profileUid = profileUidFromUrl || user.uid;
-  isOwnProfile = profileUid === user.uid;
-
-  await loadProfile(profileUid);
+  await loadProfile();
+  await loadUserContent();
 });
 
-/* =========================
+/* ===============================
    LOAD PROFILE
-========================= */
+================================ */
 
-async function loadProfile(uid) {
+async function loadProfile() {
   try {
-    const userRef = doc(db, "users", uid);
+    const userRef = doc(db, "users", currentUser.uid);
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      showMessage("Perfil não encontrado.");
-      window.location.href = "home.html";
-      return;
-    }
+      currentUserData = {
+        displayName: currentUser.displayName || "Usuário Vinyl",
+        username: currentUser.email?.split("@")[0] || "usuario",
+        photoURL: currentUser.photoURL || "",
+        bannerURL: "",
+        bio: "",
+        favoriteGenres: [],
+        favoriteArtists: [],
+        favoriteAlbums: [],
+        privacy: {
+          privateProfile: false,
+          allowDirectMessages: true,
+          showActivity: true,
+          showFavorites: true,
+          showReviews: true,
+          searchableProfile: true
+        },
+        createdAt: serverTimestamp()
+      };
 
-    const publicUserData = userSnap.data();
-
-    currentUserData = {
-      uid,
-      ...publicUserData,
-      ...(isOwnProfile ? await loadPrivateSpotifyData(uid, publicUserData) : {})
-    };
-
-    const mergedPrivacy = {
-      ...DEFAULT_PRIVACY,
-      ...(currentUserData.privacy || {})
-    };
-
-    if (!currentUserData.privacy && isOwnProfile) {
-      await setDoc(userRef, {
-        privacy: mergedPrivacy,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-
-      currentUserData.privacy = mergedPrivacy;
+      await setDoc(userRef, currentUserData, { merge: true });
     } else {
-      currentUserData.privacy = mergedPrivacy;
+      currentUserData = userSnap.data();
     }
 
-    renderProfile(currentUserData);
-
-    if (isOwnProfile) {
-      renderPrivacyForm(currentUserData.privacy);
-    }
-
-    applyPrivacy(currentUserData.privacy);
-
-    if (isOwnProfile) {
-      loadCurrentSpotifyActivity(currentUserData);
-    } else {
-      renderSpotifyActivityMessage(`
-        <span>♪</span>
-        <p>Atividade do Spotify indisponível neste perfil.</p>
-      `);
-    }
-
+    renderProfile();
+    fillEditModal();
+    fillPrivacyModal();
   } catch (error) {
-    console.error(error);
-    showMessage("Erro ao carregar perfil.");
+    console.error("Erro ao carregar perfil:", error);
+    showToast("Não foi possível carregar seu perfil.");
   }
 }
 
-/* =========================
-   RENDER PROFILE
-========================= */
+function renderProfile() {
+  const displayName = getDisplayName(currentUserData);
+  const username = getUsername(currentUserData);
+  const avatar = getAvatar(currentUserData);
+  const banner = currentUserData?.bannerURL || currentUserData?.banner || fallbackBanner;
 
-function renderProfile(data) {
-  const displayName = data.displayName || data.username || "Usuário Vinyl";
-  const username = data.username || "usuario";
-  const bio = data.bio || "Esse usuário ainda não escreveu uma bio musical.";
-
+  if (profileAvatar) profileAvatar.src = avatar;
   if (profileDisplayName) profileDisplayName.textContent = displayName;
   if (profileUsername) profileUsername.textContent = `@${username}`;
-  if (profileBio) profileBio.textContent = bio;
-
-  if (profileAvatar) {
-    profileAvatar.src = data.photoURL || DEFAULT_AVATAR;
-    profileAvatar.onerror = () => {
-      profileAvatar.src = DEFAULT_AVATAR;
-    };
+  if (profileBio) {
+    profileBio.textContent = currentUserData?.bio || "Sua bio musical aparecerá aqui.";
   }
 
-  if (followersCount) followersCount.textContent = getArrayCount(data.followers);
-  if (followingCount) followingCount.textContent = getArrayCount(data.following);
-  if (reviewsCount) reviewsCount.textContent = getArrayCount(data.reviews);
+  setBannerImage(banner);
 
-  const visibleArtists = getVisibleArtists(data.favoriteArtists || [], data.hiddenArtists || []);
-
-  if (favoritesCount) {
-    favoritesCount.textContent =
-      getArrayCount(visibleArtists) + getArrayCount(data.favoriteAlbums);
+  if (currentTrackText) {
+    currentTrackText.textContent = currentUserData?.currentTrack || "Nenhuma música";
   }
 
-  renderGenres(data.favoriteGenres || []);
-  renderArtists(visibleArtists);
-  renderHiddenArtists(isOwnProfile ? data.hiddenArtists || [] : []);
-  renderAlbums(data.favoriteAlbums || []);
-
-  if (isOwnProfile) {
-    if (editDisplayName) editDisplayName.value = displayName;
-    if (editUsername) editUsername.value = username;
-    if (editPhotoPreview) editPhotoPreview.src = data.photoURL || DEFAULT_AVATAR;
-    if (editBio) editBio.value = data.bio || "";
+  if (favoriteAlbumText) {
+    favoriteAlbumText.textContent = currentUserData?.favoriteAlbum || "Não definido";
   }
 
-  if (editProfileBtn) editProfileBtn.hidden = !isOwnProfile;
-  if (openPrivacyModalBtn) openPrivacyModalBtn.hidden = !isOwnProfile;
-  if (deleteAccountBtn) deleteAccountBtn.hidden = !isOwnProfile;
+  if (topGenreText) {
+    topGenreText.textContent = currentUserData?.topGenre || "Não definido";
+  }
 
-  if (messageBtn) {
-    messageBtn.hidden = isOwnProfile;
+  if (followersCount) {
+    followersCount.textContent =
+      currentUserData?.followersCount ?? countArray(currentUserData?.followers);
+  }
+
+  if (followingCount) {
+    followingCount.textContent =
+      currentUserData?.followingCount ?? countArray(currentUserData?.following);
+  }
+
+  const favoriteTotal =
+    countArray(currentUserData?.favoriteArtists) +
+    countArray(currentUserData?.favoriteAlbums) +
+    countArray(currentUserData?.favoriteGenres);
+
+  if (favoritesCount) favoritesCount.textContent = favoriteTotal;
+
+  const privateProfile = Boolean(currentUserData?.privacy?.privateProfile);
+
+  if (privateProfileBox) {
+    privateProfileBox.hidden = !privateProfile;
+  }
+
+  renderGenres(currentUserData?.favoriteGenres || []);
+  renderArtists(currentUserData?.favoriteArtists || []);
+  renderAlbums(currentUserData?.favoriteAlbums || []);
+
+  if (summaryTopArtist) {
+    summaryTopArtist.textContent =
+      currentUserData?.favoriteArtist ||
+      currentUserData?.favoriteArtists?.[0]?.name ||
+      currentUserData?.favoriteArtists?.[0] ||
+      "Ainda sem dados";
+  }
+
+  if (summaryMood) {
+    summaryMood.textContent = currentUserData?.topGenre
+      ? `Vibe ${currentUserData.topGenre}`
+      : "Descobrindo sons";
+  }
+
+  if (summaryCompatibility) {
+    summaryCompatibility.textContent = currentUserData?.compatibilityScore
+      ? `${currentUserData.compatibilityScore}%`
+      : "--%";
   }
 }
+
+/* ===============================
+   RENDER FAVORITES
+================================ */
 
 function renderGenres(genres) {
   if (!favoriteGenresList) return;
-
-  favoriteGenresList.innerHTML = "";
 
   if (!genres.length) {
     favoriteGenresList.innerHTML = `<span class="empty-state">Nenhum gênero favorito ainda.</span>`;
     return;
   }
 
-  genres.forEach((genre) => {
-    const chip = document.createElement("span");
-    chip.className = "genre-chip";
-    chip.textContent = genre;
-    favoriteGenresList.appendChild(chip);
-  });
+  favoriteGenresList.innerHTML = genres.map((genre) => {
+    const name = typeof genre === "string" ? genre : genre.name;
+    const icon = typeof genre === "object" && genre.icon ? genre.icon : "🎧";
+
+    return `
+      <span class="genre-chip">
+        ${safeText(icon)} ${safeText(name)}
+      </span>
+    `;
+  }).join("");
 }
 
 function renderArtists(artists) {
   if (!favoriteArtistsGrid) return;
-
-  favoriteArtistsGrid.innerHTML = "";
 
   if (!artists.length) {
     favoriteArtistsGrid.innerHTML = `<span class="empty-state">Nenhum artista favorito ainda.</span>`;
     return;
   }
 
-  artists.forEach((artist) => {
-    const card = createFavoriteCard({
-      title: artist.name || artist,
-      subtitle: artist.genre || "Artista",
-      image: artist.image || "",
-      actionLabel: isOwnProfile ? "Ocultar" : "",
-      actionTitle: `Ocultar ${artist.name || artist}`,
-      onAction: isOwnProfile ? () => hideFavoriteArtist(artist) : null
-    });
+  favoriteArtistsGrid.innerHTML = artists.map((artist, index) => {
+    const item = typeof artist === "string"
+      ? { name: artist, image: fallbackCover, subtitle: "Artista" }
+      : artist;
 
-    favoriteArtistsGrid.appendChild(card);
-  });
-}
+    return `
+      <article class="music-card">
+        <span class="music-card-rank">#${index + 1}</span>
 
-function renderHiddenArtists(artists) {
-  if (!hiddenArtistsGrid || !hiddenArtistsSection) return;
+        <img src="${safeText(item.image || item.photoURL || fallbackCover)}" alt="${safeText(item.name || "Artista")}">
 
-  hiddenArtistsGrid.innerHTML = "";
-  hiddenArtistsSection.hidden = !isOwnProfile || !artists.length || !currentUserData?.privacy?.showFavorites;
-
-  if (!artists.length) {
-    hiddenArtistsGrid.innerHTML = `<span class="empty-state">Nenhum artista oculto.</span>`;
-    return;
-  }
-
-  artists.forEach((artist) => {
-    const card = createFavoriteCard({
-      title: artist.name || artist,
-      subtitle: artist.genre || "Artista oculto",
-      image: artist.image || "",
-      actionLabel: "Restaurar",
-      actionTitle: `Restaurar ${artist.name || artist}`,
-      onAction: () => restoreHiddenArtist(artist)
-    });
-
-    hiddenArtistsGrid.appendChild(card);
-  });
+        <div class="music-card-body">
+          <strong>${safeText(item.name || "Artista")}</strong>
+          <span>${safeText(item.subtitle || "Artista favorito")}</span>
+        </div>
+      </article>
+    `;
+  }).join("");
 }
 
 function renderAlbums(albums) {
   if (!favoriteAlbumsGrid) return;
-
-  favoriteAlbumsGrid.innerHTML = "";
 
   if (!albums.length) {
     favoriteAlbumsGrid.innerHTML = `<span class="empty-state">Nenhum álbum favorito ainda.</span>`;
     return;
   }
 
-  albums.forEach((album) => {
-    const card = createFavoriteCard({
-      title: album.title || album,
-      subtitle: album.artist
-        ? `${album.artist}${album.genre ? ` • ${album.genre}` : ""}`
-        : "Álbum",
-      image: album.image || ""
-    });
+  favoriteAlbumsGrid.innerHTML = albums.map((album, index) => {
+    const item = typeof album === "string"
+      ? { name: album, image: fallbackCover, subtitle: "Álbum" }
+      : album;
 
-    favoriteAlbumsGrid.appendChild(card);
-  });
+    return `
+      <article class="music-card">
+        <span class="music-card-rank">#${index + 1}</span>
+
+        <img src="${safeText(item.image || item.cover || fallbackCover)}" alt="${safeText(item.name || "Álbum")}">
+
+        <div class="music-card-body">
+          <strong>${safeText(item.name || item.title || "Álbum")}</strong>
+          <span>${safeText(item.artist || item.subtitle || "Álbum favorito")}</span>
+        </div>
+      </article>
+    `;
+  }).join("");
 }
 
-/* =========================
-   SPOTIFY
-========================= */
+/* ===============================
+   LOAD USER CONTENT
+================================ */
 
-async function loadCurrentSpotifyActivity(userData, hasRetriedRefresh = false) {
-  if (!activityList) return;
+async function loadUserContent() {
+  await Promise.all([
+    loadReviews(),
+    loadActivity()
+  ]);
+}
 
-  if (!userData.spotifyConnected || !userData.spotifyToken) {
-    renderSpotifyActivityMessage(`
-      <span>♪</span>
-      <p>Conecte o Spotify para mostrar o que voce esta ouvindo agora.</p>
-    `);
+async function loadReviews() {
+  if (!reviewsList || !currentUser) return;
+
+  try {
+    const reviewsQuery = query(
+      collection(db, "reviews"),
+      where("userId", "==", currentUser.uid),
+      orderBy("createdAt", "desc"),
+      limit(20)
+    );
+
+    const snapshot = await getDocs(reviewsQuery);
+
+    const reviews = snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
+
+    if (reviewsCount) {
+      reviewsCount.textContent = reviews.length;
+    }
+
+    renderReviews(reviews);
+  } catch (error) {
+    console.warn("Erro ao carregar reviews:", error);
+
+    reviewsList.innerHTML = `
+      <span class="empty-state">Nenhuma review publicada ainda.</span>
+    `;
+  }
+}
+
+function renderReviews(reviews) {
+  if (!reviewsList) return;
+
+  if (!reviews.length) {
+    reviewsList.innerHTML = `
+      <span class="empty-state">Nenhuma review publicada ainda.</span>
+    `;
     return;
   }
 
-  try {
-    const response = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
-      headers: {
-        Authorization: `Bearer ${userData.spotifyToken}`
-      }
-    });
+  reviewsList.innerHTML = reviews.map((review) => {
+    const rating = Number(review.rating || 0);
+    const stars = "★★★★★".slice(0, rating).padEnd(5, "☆");
 
-    if (response.status === 204) {
-      renderSpotifyActivityMessage(`
-        <span>♪</span>
-        <p>Nada tocando no Spotify agora.</p>
-      `);
-      return;
-    }
+    return `
+      <article class="review-card">
+        <img src="${safeText(review.cover || review.image || fallbackCover)}" alt="${safeText(review.title || "Review")}">
 
-    if (response.status === 401 || response.status === 403) {
-      if (!hasRetriedRefresh && userData.spotifyRefreshToken) {
-        const refreshedData = await refreshSpotifyAccessToken(userData.spotifyRefreshToken);
+        <div class="review-card-content">
+          <span>Review · ${formatDate(review.createdAt)}</span>
+          <h3>${safeText(review.title || review.albumName || "Review musical")}</h3>
 
-        if (refreshedData) {
-          await loadCurrentSpotifyActivity(refreshedData, true);
-          return;
-        }
-      }
+          <div class="rating">${safeText(stars)}</div>
 
-      markSpotifyNeedsReconnect();
+          <p>${safeText(review.text || review.content || "Sem texto.")}</p>
 
-      renderSpotifyActivityMessage(`
-        <span>!</span>
-        <div>
-          <strong>Reconecte o Spotify</strong>
-          <p>Atualizamos a integracao para mostrar sua musica em tempo real. E so reconectar uma vez.</p>
+          <div class="review-actions">
+            <button type="button">♡ Curtir</button>
+            <button type="button">💬 Comentar</button>
+          </div>
         </div>
-        <a href="/api/spotifyLogin">Reconectar</a>
-      `);
-      return;
-    }
-
-    if (!response.ok) {
-      throw new Error(`Spotify API: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const track = data.item;
-
-    if (!track) {
-      renderSpotifyActivityMessage(`
-        <span>♪</span>
-        <p>Nada tocando no Spotify agora.</p>
-      `);
-      return;
-    }
-
-    renderCurrentTrack({
-      name: track.name || "Musica sem titulo",
-      artist: track.artists?.map((artist) => artist.name).join(", ") || "Artista",
-      album: track.album?.name || "",
-      image: track.album?.images?.[0]?.url || DEFAULT_AVATAR,
-      url: track.external_urls?.spotify || "#",
-      isPlaying: Boolean(data.is_playing)
-    });
-  } catch (error) {
-    console.error("Erro ao carregar atividade Spotify:", error);
-
-    renderSpotifyActivityMessage(`
-      <span>♪</span>
-      <p>Nao foi possivel carregar o Spotify agora.</p>
-    `);
-  }
+      </article>
+    `;
+  }).join("");
 }
 
-async function refreshSpotifyAccessToken(refreshToken) {
+async function loadActivity() {
+  if (!activityList || !currentUser) return;
+
   try {
-    const response = await fetch("/api/spotifyRefresh", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ refreshToken })
-    });
+    const activityQuery = query(
+      collection(db, "activities"),
+      where("userId", "==", currentUser.uid),
+      orderBy("createdAt", "desc"),
+      limit(20)
+    );
 
-    if (!response.ok) {
-      throw new Error(`Spotify refresh: ${response.status}`);
-    }
+    const snapshot = await getDocs(activityQuery);
 
-    const data = await response.json();
+    const activities = snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
 
-    if (!data.accessToken) return null;
-
-    const nextUserData = {
-      ...currentUserData,
-      spotifyConnected: true,
-      spotifyToken: data.accessToken,
-      spotifyRefreshToken: data.refreshToken || refreshToken,
-      spotifyTokenRefreshedAt: new Date()
-    };
-
-    await setDoc(doc(db, "users", currentUser.uid, "private", "spotify"), {
-      accessToken: nextUserData.spotifyToken,
-      refreshToken: nextUserData.spotifyRefreshToken,
-      tokenRefreshedAt: serverTimestamp(),
-      tokenExpiresAt: Date.now() + (data.expiresIn || 3600) * 1000
-    }, { merge: true });
-
-    await setDoc(doc(db, "users", currentUser.uid), {
-      spotifyConnected: true,
-      spotifyToken: deleteField(),
-      spotifyRefreshToken: deleteField(),
-      spotifyTokenRefreshedAt: deleteField(),
-      spotifyTokenExpiresAt: deleteField()
-    }, { merge: true });
-
-    currentUserData = nextUserData;
-
-    return nextUserData;
+    renderActivity(activities);
   } catch (error) {
-    console.error("Erro ao renovar token Spotify:", error);
-    return null;
+    console.warn("Erro ao carregar atividade:", error);
+
+    activityList.innerHTML = `
+      <article class="activity-card">
+        <span>🎧</span>
+        <p>As atividades musicais aparecerão aqui.</p>
+      </article>
+    `;
   }
 }
 
-function markSpotifyNeedsReconnect() {
-  const spotifyStatus = document.getElementById("spotifyStatus");
+function renderActivity(activities) {
+  if (!activityList) return;
 
-  if (!spotifyStatus) return;
-
-  spotifyStatus.textContent = "Spotify precisa reconectar";
-  spotifyStatus.style.color = "#ffcc70";
-}
-
-async function loadPrivateSpotifyData(uid, publicUserData) {
-  if (!isOwnProfile) return {};
-
-  const privateSpotifyRef = doc(db, "users", uid, "private", "spotify");
-  const privateSpotifySnap = await getDoc(privateSpotifyRef);
-
-  let privateSpotifyData = privateSpotifySnap.exists()
-    ? privateSpotifySnap.data()
-    : {};
-
-  if (publicUserData.spotifyToken || publicUserData.spotifyRefreshToken) {
-    const accessToken = publicUserData.spotifyToken || privateSpotifyData.accessToken || "";
-    const refreshToken = publicUserData.spotifyRefreshToken || privateSpotifyData.refreshToken || "";
-
-    await setDoc(privateSpotifyRef, {
-      accessToken,
-      refreshToken,
-      connectedAt: privateSpotifyData.connectedAt || serverTimestamp(),
-      tokenRefreshedAt: serverTimestamp(),
-      tokenExpiresAt: publicUserData.spotifyTokenExpiresAt || privateSpotifyData.tokenExpiresAt || null
-    }, { merge: true });
-
-    await setDoc(doc(db, "users", uid), {
-      spotifyConnected: true,
-      spotifyToken: deleteField(),
-      spotifyRefreshToken: deleteField(),
-      spotifyTokenRefreshedAt: deleteField(),
-      spotifyTokenExpiresAt: deleteField()
-    }, { merge: true });
-
-    privateSpotifyData = {
-      ...privateSpotifyData,
-      accessToken,
-      refreshToken,
-      tokenExpiresAt: publicUserData.spotifyTokenExpiresAt || privateSpotifyData.tokenExpiresAt || null
-    };
+  if (!activities.length) {
+    activityList.innerHTML = `
+      <article class="activity-card">
+        <span>🎧</span>
+        <p>As atividades musicais aparecerão aqui.</p>
+      </article>
+    `;
+    return;
   }
 
-  return {
-    spotifyConnected: Boolean(
-      publicUserData.spotifyConnected ||
-      privateSpotifyData.accessToken ||
-      privateSpotifyData.refreshToken
-    ),
-    spotifyToken: privateSpotifyData.accessToken || "",
-    spotifyRefreshToken: privateSpotifyData.refreshToken || "",
-    spotifyTokenExpiresAt: privateSpotifyData.tokenExpiresAt || null
+  activityList.innerHTML = activities.map((activity) => {
+    const icon = activity.icon || getActivityIcon(activity.type);
+
+    return `
+      <article class="activity-card">
+        <span>${safeText(icon)}</span>
+        <p>${safeText(activity.message || "Nova atividade musical.")}</p>
+      </article>
+    `;
+  }).join("");
+}
+
+function getActivityIcon(type) {
+  const icons = {
+    favorite: "❤️",
+    review: "⭐",
+    follow: "👤",
+    listen: "🎧",
+    repost: "🔁"
   };
+
+  return icons[type] || "🎧";
 }
 
-function renderCurrentTrack(track) {
-  if (!activityList) return;
+/* ===============================
+   TABS
+================================ */
 
-  activityList.innerHTML = `
-    <article class="activity-card spotify-now-card">
-      <img src="${escapeHTML(track.image)}" alt="${escapeHTML(track.name)}">
+const tabButtons = document.querySelectorAll(".profile-tabs button");
+const tabPanels = document.querySelectorAll(".profile-tab-panel");
 
-      <div class="spotify-now-content">
-        <span>${track.isPlaying ? "Tocando agora" : "Pausado no Spotify"}</span>
-        <strong>${escapeHTML(track.name)}</strong>
-        <p>${escapeHTML(track.artist)}${track.album ? ` • ${escapeHTML(track.album)}` : ""}</p>
-      </div>
+tabButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const tab = button.dataset.tab;
 
-      <a href="${escapeHTML(track.url)}" target="_blank" rel="noopener noreferrer">
-        Spotify
-      </a>
-    </article>
-  `;
-}
+    tabButtons.forEach((btn) => btn.classList.remove("active"));
+    tabPanels.forEach((panel) => panel.classList.remove("active"));
 
-function renderSpotifyActivityMessage(content) {
-  if (!activityList) return;
-
-  activityList.innerHTML = `
-    <article class="activity-card spotify-empty-card">
-      ${content}
-    </article>
-  `;
-}
-
-/* =========================
-   FAVORITES
-========================= */
-
-function createFavoriteCard({ title, subtitle, image, actionLabel = "", actionTitle = "", onAction = null }) {
-  const card = document.createElement("article");
-  card.className = "favorite-card";
-
-  const initials = getInitials(title);
-
-  card.innerHTML = `
-    <div class="favorite-cover">
-      ${
-        image
-          ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(title)}" loading="lazy">`
-          : `<span class="favorite-initials">${escapeHTML(initials)}</span>`
-      }
-    </div>
-
-    <div class="favorite-content">
-      <h3>${escapeHTML(title)}</h3>
-      <p>${escapeHTML(subtitle)}</p>
-      ${
-        onAction
-          ? `<button class="favorite-action-btn" type="button" title="${escapeHTML(actionTitle || actionLabel)}">${escapeHTML(actionLabel)}</button>`
-          : ""
-      }
-    </div>
-  `;
-
-  const img = card.querySelector("img");
-
-  if (img) {
-    img.addEventListener("error", () => {
-      const cover = card.querySelector(".favorite-cover");
-      cover.innerHTML = `<span class="favorite-initials">${escapeHTML(initials)}</span>`;
-    });
-  }
-
-  const actionBtn = card.querySelector(".favorite-action-btn");
-
-  actionBtn?.addEventListener("click", (event) => {
-    event.stopPropagation();
-    onAction?.();
+    button.classList.add("active");
+    document.getElementById(`${tab}Tab`)?.classList.add("active");
   });
+});
 
-  return card;
+favoritesBtn?.addEventListener("click", () => {
+  document.querySelector('[data-tab="favorites"]')?.click();
+});
+
+/* ===============================
+   EDIT MODAL
+================================ */
+
+function openEditModal() {
+  if (!editProfileModal) return;
+
+  fillEditModal();
+  editProfileModal.hidden = false;
 }
 
-async function hideFavoriteArtist(artist) {
-  if (!isOwnProfile) return;
-  if (!currentUser || !currentUserData) return;
+function closeEditModal() {
+  if (!editProfileModal) return;
 
-  const favoriteArtists = currentUserData.favoriteArtists || [];
-  const hiddenArtists = currentUserData.hiddenArtists || [];
-  const artistKey = getArtistKey(artist);
+  editProfileModal.hidden = true;
+}
 
-  if (!artistKey) return;
+editProfileBtn?.addEventListener("click", openEditModal);
+closeEditModalBtn?.addEventListener("click", closeEditModal);
 
-  const nextFavoriteArtists = favoriteArtists.filter((item) => getArtistKey(item) !== artistKey);
-  const alreadyHidden = hiddenArtists.some((item) => getArtistKey(item) === artistKey);
-  const hiddenArtist = normalizeArtistForStorage(artist);
+editProfileModal?.addEventListener("click", (event) => {
+  if (event.target === editProfileModal) {
+    closeEditModal();
+  }
+});
 
-  const nextHiddenArtists = alreadyHidden
-    ? hiddenArtists
-    : [
-        ...hiddenArtists,
-        {
-          ...hiddenArtist,
-          hiddenAt: Date.now()
-        }
-      ];
+function fillEditModal() {
+  if (!currentUserData) return;
+
+  if (editDisplayName) editDisplayName.value = getDisplayName(currentUserData);
+  if (editUsername) editUsername.value = getUsername(currentUserData);
+  if (editBio) editBio.value = currentUserData.bio || "";
+  if (bioCounter) bioCounter.textContent = editBio?.value.length || 0;
+
+  if (editPhotoPreview) {
+    editPhotoPreview.src = getAvatar(currentUserData);
+  }
+
+  if (editCurrentTrack) {
+    editCurrentTrack.value = currentUserData.currentTrack || "";
+  }
+
+  if (editFavoriteArtist) {
+    editFavoriteArtist.value = currentUserData.favoriteArtist || "";
+  }
+
+  if (editFavoriteAlbum) {
+    editFavoriteAlbum.value = currentUserData.favoriteAlbum || "";
+  }
+
+  if (editTopGenre) {
+    editTopGenre.value = currentUserData.topGenre || "";
+  }
+
+  setBannerImage(currentUserData.bannerURL || currentUserData.banner || fallbackBanner);
+}
+
+editBio?.addEventListener("input", () => {
+  if (bioCounter) {
+    bioCounter.textContent = editBio.value.length;
+  }
+});
+
+editUsername?.addEventListener("input", () => {
+  editUsername.value = normalizeUsername(editUsername.value);
+});
+
+editPhotoFile?.addEventListener("change", () => {
+  const file = editPhotoFile.files?.[0];
+
+  if (!file) return;
+
+  selectedPhotoFile = file;
+
+  const previewURL = URL.createObjectURL(file);
+
+  if (editPhotoPreview) {
+    editPhotoPreview.src = previewURL;
+  }
+});
+
+editBannerFile?.addEventListener("change", () => {
+  const file = editBannerFile.files?.[0];
+
+  if (!file) return;
+
+  selectedBannerFile = file;
+
+  const previewURL = URL.createObjectURL(file);
+
+  if (editBannerPreview) {
+    editBannerPreview.style.backgroundImage = `
+      linear-gradient(135deg, rgba(255, 63, 127, .28), rgba(255, 45, 85, .08)),
+      url("${previewURL}")
+    `;
+  }
+});
+
+editProfileForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!currentUser) return;
+
+  const displayNameValue = editDisplayName.value.trim();
+  const usernameValue = normalizeUsername(editUsername.value);
+  const bioValue = editBio.value.trim();
+
+  if (!displayNameValue) {
+    showToast("Digite um nome de exibição.");
+    return;
+  }
+
+  if (!usernameValue || usernameValue.length < 3) {
+    showToast("O nome de usuário precisa ter pelo menos 3 caracteres.");
+    return;
+  }
+
+  const submitBtn = editProfileForm.querySelector("button[type='submit']");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Salvando...";
 
   try {
-    await setDoc(doc(db, "users", currentUser.uid), {
-      favoriteArtists: nextFavoriteArtists,
-      hiddenArtists: nextHiddenArtists,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
+    let photoURL = currentUserData?.photoURL || currentUserData?.avatar || "";
+    let bannerURL = currentUserData?.bannerURL || currentUserData?.banner || "";
 
-    await deleteDoc(doc(db, "users", currentUser.uid, "favorites", createFavoriteId("artist", hiddenArtist.id || artistKey)));
+    if (selectedPhotoFile) {
+      photoURL = await uploadImage(selectedPhotoFile, "profilePhotos");
+    }
+
+    if (selectedBannerFile) {
+      bannerURL = await uploadImage(selectedBannerFile, "profileBanners");
+    }
+
+    const updates = {
+      displayName: displayNameValue,
+      username: usernameValue,
+      usernameLower: usernameValue.toLowerCase(),
+      bio: bioValue,
+      photoURL,
+      bannerURL,
+      currentTrack: editCurrentTrack.value.trim(),
+      favoriteArtist: editFavoriteArtist.value.trim(),
+      favoriteAlbum: editFavoriteAlbum.value.trim(),
+      topGenre: editTopGenre.value.trim(),
+      updatedAt: serverTimestamp()
+    };
+
+    await updateDoc(doc(db, "users", currentUser.uid), updates);
 
     currentUserData = {
       ...currentUserData,
-      favoriteArtists: nextFavoriteArtists,
-      hiddenArtists: nextHiddenArtists
+      ...updates
     };
 
-    renderProfile(currentUserData);
-    showMessage("Artista ocultado.");
+    selectedPhotoFile = null;
+    selectedBannerFile = null;
+
+    renderProfile();
+    closeEditModal();
+    showToast("Perfil atualizado!");
   } catch (error) {
-    console.error(error);
-    showMessage("Nao foi possivel ocultar o artista.");
+    console.error("Erro ao salvar perfil:", error);
+    showToast("Não foi possível salvar o perfil.");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Salvar alterações";
   }
-}
+});
 
-async function restoreHiddenArtist(artist) {
-  if (!isOwnProfile) return;
-  if (!currentUser || !currentUserData) return;
+/* ===============================
+   QUICK BANNER
+================================ */
 
-  const favoriteArtists = currentUserData.favoriteArtists || [];
-  const hiddenArtists = currentUserData.hiddenArtists || [];
-  const artistKey = getArtistKey(artist);
+changeBannerBtn?.addEventListener("click", () => {
+  quickBannerInput?.click();
+});
 
-  if (!artistKey) return;
+quickBannerInput?.addEventListener("change", async () => {
+  const file = quickBannerInput.files?.[0];
 
-  const nextHiddenArtists = hiddenArtists.filter((item) => getArtistKey(item) !== artistKey);
-  const alreadyFavorite = favoriteArtists.some((item) => getArtistKey(item) === artistKey);
-
-  const nextFavoriteArtists = alreadyFavorite
-    ? favoriteArtists
-    : [
-        ...favoriteArtists,
-        normalizeArtistForStorage(artist)
-      ];
+  if (!file || !currentUser) return;
 
   try {
-    await setDoc(doc(db, "users", currentUser.uid), {
-      favoriteArtists: nextFavoriteArtists,
-      hiddenArtists: nextHiddenArtists,
+    showToast("Enviando banner...");
+
+    const bannerURL = await uploadImage(file, "profileBanners");
+
+    await updateDoc(doc(db, "users", currentUser.uid), {
+      bannerURL,
       updatedAt: serverTimestamp()
-    }, { merge: true });
+    });
 
     currentUserData = {
       ...currentUserData,
-      favoriteArtists: nextFavoriteArtists,
-      hiddenArtists: nextHiddenArtists
+      bannerURL
     };
 
-    renderProfile(currentUserData);
-    showMessage("Artista restaurado.");
+    setBannerImage(bannerURL);
+    showToast("Banner atualizado!");
   } catch (error) {
-    console.error(error);
-    showMessage("Nao foi possivel restaurar o artista.");
+    console.error("Erro ao trocar banner:", error);
+    showToast("Não foi possível atualizar o banner.");
   }
-}
+});
 
-function getVisibleArtists(artists, hiddenArtists) {
-  return artists.filter((artist) => !isArtistHidden(artist, hiddenArtists));
-}
-
-function isArtistHidden(artist, hiddenArtists) {
-  const artistKey = getArtistKey(artist);
-
-  if (!artistKey) return false;
-
-  return hiddenArtists.some((hiddenArtist) => getArtistKey(hiddenArtist) === artistKey);
-}
-
-function getArtistKey(artist) {
-  if (!artist) return "";
-
-  if (typeof artist === "string") return normalizeText(artist);
-
-  return normalizeText(artist.id || artist.spotifyId || artist.name || "");
-}
-
-function normalizeArtistForStorage(artist) {
-  if (typeof artist === "string") {
-    return {
-      name: artist,
-      genre: "",
-      image: ""
-    };
-  }
-
-  return {
-    ...artist,
-    id: artist.id || artist.spotifyId || "",
-    name: artist.name || "",
-    genre: artist.genre || "",
-    image: artist.image || ""
-  };
-}
-
-function createFavoriteId(type, id) {
-  return `${type}_${id}`;
-}
-
-/* =========================
+/* ===============================
    PRIVACY
-========================= */
+================================ */
 
-function renderPrivacyForm(privacy) {
-  if (!isOwnProfile) return;
+function openPrivacyModal() {
+  if (!privacyModal) return;
 
-  if (privateProfileToggle) privateProfileToggle.checked = Boolean(privacy.privateProfile);
-  if (allowDirectMessagesToggle) allowDirectMessagesToggle.checked = Boolean(privacy.allowDirectMessages);
-  if (showActivityToggle) showActivityToggle.checked = Boolean(privacy.showActivity);
-  if (showFavoritesToggle) showFavoritesToggle.checked = Boolean(privacy.showFavorites);
-  if (showReviewsToggle) showReviewsToggle.checked = Boolean(privacy.showReviews);
-  if (searchableProfileToggle) searchableProfileToggle.checked = Boolean(privacy.searchableProfile);
+  fillPrivacyModal();
+  privacyModal.hidden = false;
 }
 
-function applyPrivacy(privacy) {
-  const isPrivate = Boolean(privacy.privateProfile);
+function closePrivacyModal() {
+  if (!privacyModal) return;
 
-  if (privateProfileBox) {
-    privateProfileBox.hidden = !isPrivate;
+  privacyModal.hidden = true;
+}
+
+openPrivacyModalBtn?.addEventListener("click", openPrivacyModal);
+closePrivacyModalBtn?.addEventListener("click", closePrivacyModal);
+
+privacyModal?.addEventListener("click", (event) => {
+  if (event.target === privacyModal) {
+    closePrivacyModal();
+  }
+});
+
+function fillPrivacyModal() {
+  const privacy = currentUserData?.privacy || {};
+
+  if (privateProfileToggle) {
+    privateProfileToggle.checked = Boolean(privacy.privateProfile);
   }
 
-  if (genresSection) {
-    genresSection.hidden = !privacy.showFavorites;
+  if (allowDirectMessagesToggle) {
+    allowDirectMessagesToggle.checked = privacy.allowDirectMessages !== false;
   }
 
-  if (artistsSection) {
-    artistsSection.hidden = !privacy.showFavorites;
+  if (showActivityToggle) {
+    showActivityToggle.checked = privacy.showActivity !== false;
   }
 
-  if (hiddenArtistsSection) {
-    hiddenArtistsSection.hidden =
-      !isOwnProfile ||
-      !privacy.showFavorites ||
-      !(currentUserData?.hiddenArtists || []).length;
+  if (showFavoritesToggle) {
+    showFavoritesToggle.checked = privacy.showFavorites !== false;
   }
 
-  if (albumsSection) {
-    albumsSection.hidden = !privacy.showFavorites;
+  if (showReviewsToggle) {
+    showReviewsToggle.checked = privacy.showReviews !== false;
   }
 
-  if (activitySection) {
-    activitySection.hidden = !privacy.showActivity;
-  }
-
-  if (reviewsSection) {
-    reviewsSection.hidden = !privacy.showReviews;
-  }
-
-  if (messageBtn) {
-    if (isOwnProfile) {
-      messageBtn.hidden = true;
-      return;
-    }
-
-    messageBtn.hidden = false;
-
-    if (privacy.allowDirectMessages) {
-      messageBtn.disabled = false;
-      messageBtn.classList.remove("disabled");
-      messageBtn.textContent = "Mensagem";
-      messageBtn.title = "Enviar mensagem";
-    } else {
-      messageBtn.disabled = true;
-      messageBtn.classList.add("disabled");
-      messageBtn.textContent = "DM desativada";
-      messageBtn.title = "Este usuário não aceita mensagens diretas.";
-    }
+  if (searchableProfileToggle) {
+    searchableProfileToggle.checked = privacy.searchableProfile !== false;
   }
 }
 
 privacyForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (!currentUser || !isOwnProfile) return;
+  if (!currentUser) return;
 
-  const privacy = {
-    privateProfile: Boolean(privateProfileToggle?.checked),
-    allowDirectMessages: Boolean(allowDirectMessagesToggle?.checked),
-    showActivity: Boolean(showActivityToggle?.checked),
-    showFavorites: Boolean(showFavoritesToggle?.checked),
-    showReviews: Boolean(showReviewsToggle?.checked),
-    searchableProfile: Boolean(searchableProfileToggle?.checked)
+  const updates = {
+    privacy: {
+      privateProfile: Boolean(privateProfileToggle?.checked),
+      allowDirectMessages: Boolean(allowDirectMessagesToggle?.checked),
+      showActivity: Boolean(showActivityToggle?.checked),
+      showFavorites: Boolean(showFavoritesToggle?.checked),
+      showReviews: Boolean(showReviewsToggle?.checked),
+      searchableProfile: Boolean(searchableProfileToggle?.checked)
+    },
+    updatedAt: serverTimestamp()
   };
 
   try {
-    await setDoc(doc(db, "users", currentUser.uid), {
-      uid: currentUser.uid,
-      privacy,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-
-    currentUserData.privacy = privacy;
-
-    applyPrivacy(privacy);
-    closeModal(privacyModal);
-    showMessage("Privacidade atualizada.");
-  } catch (error) {
-    console.error(error);
-    showMessage("Não foi possível salvar a privacidade.");
-  }
-});
-
-/* =========================
-   EDIT PROFILE
-========================= */
-
-editPhotoFile?.addEventListener("change", () => {
-  if (!isOwnProfile) return;
-
-  const file = editPhotoFile.files?.[0];
-
-  if (!file || !editPhotoPreview) return;
-
-  const reader = new FileReader();
-
-  reader.addEventListener("load", () => {
-    editPhotoPreview.src = reader.result;
-  });
-
-  reader.readAsDataURL(file);
-});
-
-editProfileForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (!currentUser || !isOwnProfile) return;
-
-  const displayName = editDisplayName.value.trim() || currentUserData.username || "Usuário Vinyl";
-  const username = normalizeUsername(editUsername?.value || currentUserData.username || displayName);
-  const photoURL = editPhotoPreview?.src?.startsWith("data:")
-    ? editPhotoPreview.src
-    : currentUserData.photoURL || "";
-  const bio = editBio.value.trim();
-
-  if (username.length < 3) {
-    showMessage("O nome de usuario precisa ter pelo menos 3 caracteres.");
-    return;
-  }
-
-  try {
-    await reserveUsername(username, displayName);
-
-    await updateProfile(currentUser, {
-      displayName,
-      photoURL: photoURL || null
-    });
-
-    await setDoc(doc(db, "users", currentUser.uid), {
-      uid: currentUser.uid,
-      displayName,
-      username,
-      photoURL,
-      bio,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
+    await updateDoc(doc(db, "users", currentUser.uid), updates);
 
     currentUserData = {
       ...currentUserData,
-      displayName,
-      username,
-      photoURL,
-      bio
+      privacy: updates.privacy
     };
 
-    renderProfile(currentUserData);
-    closeModal(editProfileModal);
-    showMessage("Perfil atualizado.");
+    renderProfile();
+    closePrivacyModal();
+    showToast("Privacidade atualizada!");
   } catch (error) {
-    console.error(error);
-
-    showMessage(
-      error.message === "username-unavailable"
-        ? "Esse nome de usuario ja esta em uso."
-        : "Não foi possível atualizar o perfil."
-    );
+    console.error("Erro ao salvar privacidade:", error);
+    showToast("Não foi possível salvar a privacidade.");
   }
 });
 
-async function reserveUsername(username, displayName) {
-  const currentUsername = normalizeUsername(currentUserData?.username || "");
-  const usernameRef = doc(db, "usernames", username);
-  const usernameSnap = await getDoc(usernameRef);
+/* ===============================
+   SHARE
+================================ */
 
-  if (usernameSnap.exists() && usernameSnap.data().uid !== currentUser.uid) {
-    throw new Error("username-unavailable");
-  }
+shareProfileBtn?.addEventListener("click", async () => {
+  const username = getUsername(currentUserData);
+  const url = `${window.location.origin}/public-profile.html?u=${encodeURIComponent(username)}`;
 
-  await setDoc(usernameRef, {
-    uid: currentUser.uid,
-    username,
-    displayName,
-    updatedAt: serverTimestamp()
-  }, { merge: true });
-
-  if (!currentUsername || currentUsername === username) return;
-
-  const previousUsernameRef = doc(db, "usernames", currentUsername);
-  const previousUsernameSnap = await getDoc(previousUsernameRef);
-
-  if (previousUsernameSnap.exists() && previousUsernameSnap.data().uid === currentUser.uid) {
-    await deleteDoc(previousUsernameRef);
-  }
-}
-
-/* =========================
-   MODALS
-========================= */
-
-editProfileBtn?.addEventListener("click", () => {
-  if (!isOwnProfile) return;
-  openModal(editProfileModal);
-});
-
-closeEditModalBtn?.addEventListener("click", () => {
-  closeModal(editProfileModal);
-});
-
-openPrivacyModalBtn?.addEventListener("click", () => {
-  if (!isOwnProfile) return;
-  openModal(privacyModal);
-});
-
-closePrivacyModalBtn?.addEventListener("click", () => {
-  closeModal(privacyModal);
-});
-
-editProfileModal?.addEventListener("click", (event) => {
-  if (event.target === editProfileModal) {
-    closeModal(editProfileModal);
-  }
-});
-
-privacyModal?.addEventListener("click", (event) => {
-  if (event.target === privacyModal) {
-    closeModal(privacyModal);
-  }
-});
-
-function openModal(modal) {
-  if (!modal) return;
-  modal.hidden = false;
-}
-
-function closeModal(modal) {
-  if (!modal) return;
-  modal.hidden = true;
-}
-
-/* =========================
-   ACTIONS
-========================= */
-
-logoutBtn?.addEventListener("click", async () => {
   try {
-    await signOut(auth);
-    window.location.href = "login.html";
+    if (navigator.share) {
+      await navigator.share({
+        title: "Meu perfil no Vinyl",
+        text: "Olha meu perfil musical no Vinyl!",
+        url
+      });
+    } else {
+      await navigator.clipboard.writeText(url);
+      showToast("Link do perfil copiado!");
+    }
   } catch (error) {
-    console.error(error);
-    showMessage("Erro ao sair da conta.");
+    console.warn(error);
   }
 });
 
-messageBtn?.addEventListener("click", () => {
-  if (isOwnProfile) return;
-
-  if (!profileUid) {
-    showMessage("Usuário inválido.");
-    return;
-  }
-
-  if (!currentUserData?.privacy?.allowDirectMessages) {
-    showMessage("Este usuário não aceita mensagens diretas.");
-    return;
-  }
-
-  window.location.href = `chat.html?uid=${encodeURIComponent(profileUid)}`;
-});
+/* ===============================
+   DELETE ACCOUNT
+================================ */
 
 deleteAccountBtn?.addEventListener("click", async () => {
-  if (!currentUser || !currentUserData || !isOwnProfile) return;
+  if (!currentUser) return;
 
-  const confirmation = prompt(
-    "Para excluir sua conta e apagar seus dados, digite EXCLUIR."
-  );
+  const firstConfirm = confirm("Tem certeza que deseja excluir sua conta?");
+  if (!firstConfirm) return;
 
-  if (confirmation !== "EXCLUIR") {
-    showMessage("Exclusao cancelada.");
+  const typed = prompt('Digite "EXCLUIR" para confirmar:');
+
+  if (typed !== "EXCLUIR") {
+    showToast("Exclusão cancelada.");
     return;
   }
 
-  const secondConfirmation = confirm(
-    "Tem certeza? Seu perfil, favoritos, reviews, posts, stories e chats serao apagados."
-  );
-
-  if (!secondConfirmation) return;
-
   try {
-    deleteAccountBtn.disabled = true;
-    deleteAccountBtn.textContent = "Validando conta...";
-
-    await reauthenticateForDeletion();
-
-    deleteAccountBtn.textContent = "Apagando dados...";
-
-    await deleteAccountData(currentUser.uid);
+    await deleteDoc(doc(db, "users", currentUser.uid));
     await deleteUser(currentUser);
 
-    localStorage.removeItem("vinylPrivacyAccepted");
-    localStorage.removeItem("vinylPrivacyAcceptedAt");
-    localStorage.removeItem("vinylPrivacyTermsVersion");
-
+    showToast("Conta excluída.");
     window.location.href = "register.html";
   } catch (error) {
     console.error("Erro ao excluir conta:", error);
 
-    if (error.message === "delete-cancelled" || error.code === "auth/popup-closed-by-user") {
-      showMessage("Exclusao cancelada.");
-    } else if (error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
-      showMessage("Senha incorreta. A conta nao foi apagada.");
-    } else if (error.code === "auth/requires-recent-login") {
-      showMessage("Por seguranca, entre novamente antes de excluir a conta.");
-    } else {
-      showMessage("Nao foi possivel excluir a conta agora.");
-    }
-  } finally {
-    deleteAccountBtn.disabled = false;
-    deleteAccountBtn.textContent = "Excluir minha conta";
+    showToast("Erro ao excluir. Faça login novamente e tente de novo.");
   }
 });
-
-/* =========================
-   DELETE ACCOUNT HELPERS
-========================= */
-
-async function deleteAccountData(uid) {
-  const username = normalizeUsername(currentUserData?.username || "");
-
-  await deleteFollowMirrorDocs(uid);
-
-  await deleteUserSubcollection(uid, "favorites");
-  await deleteUserSubcollection(uid, "reviews");
-  await deleteUserSubcollection(uid, "following");
-  await deleteUserSubcollection(uid, "followers");
-  await deleteUserSubcollection(uid, "private");
-
-  await deleteQueryDocs(query(collection(db, "posts"), where("userId", "==", uid)));
-  await deleteQueryDocs(query(collection(db, "stories"), where("userId", "==", uid)));
-  await deleteQueryDocs(query(collection(db, "reviews"), where("userId", "==", uid)));
-  await deleteQueryDocs(query(collection(db, "feed"), where("userId", "==", uid)));
-  await deleteQueryDocs(query(collection(db, "notifications"), where("toUserId", "==", uid)));
-
-  await deleteUserChatDocs(uid);
-
-  if (username) {
-    await deleteDoc(doc(db, "usernames", username));
-  }
-
-  await deleteDoc(doc(db, "users", uid));
-}
-
-async function reauthenticateForDeletion() {
-  const providers = currentUser?.providerData?.map((provider) => provider.providerId) || [];
-
-  if (providers.includes("google.com")) {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
-    await reauthenticateWithPopup(currentUser, provider);
-    return;
-  }
-
-  const password = prompt("Digite sua senha para confirmar a exclusao da conta.");
-
-  if (!password) {
-    throw new Error("delete-cancelled");
-  }
-
-  const credential = EmailAuthProvider.credential(currentUser.email, password);
-  await reauthenticateWithCredential(currentUser, credential);
-}
-
-async function deleteUserSubcollection(uid, subcollectionName) {
-  await deleteQueryDocs(collection(db, "users", uid, subcollectionName));
-}
-
-async function deleteUserChatDocs(uid) {
-  const chatsSnap = await getDocs(
-    query(collection(db, "chats"), where("members", "array-contains", uid))
-  );
-
-  for (const chatDoc of chatsSnap.docs) {
-    await deleteQueryDocs(
-      query(collection(db, "chats", chatDoc.id, "messages"), where("senderId", "==", uid))
-    );
-
-    await deleteDoc(doc(db, "chats", chatDoc.id));
-  }
-}
-
-async function deleteFollowMirrorDocs(uid) {
-  const followingSnap = await getDocs(collection(db, "users", uid, "following"));
-  const followersSnap = await getDocs(collection(db, "users", uid, "followers"));
-
-  for (const followingDoc of followingSnap.docs) {
-    await deleteDoc(doc(db, "users", followingDoc.id, "followers", uid));
-  }
-
-  for (const followerDoc of followersSnap.docs) {
-    await deleteDoc(doc(db, "users", followerDoc.id, "following", uid));
-  }
-}
-
-async function deleteQueryDocs(targetQuery) {
-  const snapshot = await getDocs(targetQuery);
-
-  if (snapshot.empty) return;
-
-  const batches = [];
-  let batch = writeBatch(db);
-  let operationCount = 0;
-
-  snapshot.docs.forEach((snapshotDoc) => {
-    batch.delete(snapshotDoc.ref);
-    operationCount++;
-
-    if (operationCount === 450) {
-      batches.push(batch.commit());
-      batch = writeBatch(db);
-      operationCount = 0;
-    }
-  });
-
-  if (operationCount > 0) {
-    batches.push(batch.commit());
-  }
-
-  await Promise.all(batches);
-}
-
-/* =========================
-   HELPERS
-========================= */
-
-function getArrayCount(value) {
-  return Array.isArray(value) ? value.length : 0;
-}
-
-function getInitials(value) {
-  return String(value || "")
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
-}
-
-function normalizeText(value) {
-  return String(value || "")
-    .toLowerCase()
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function normalizeUsername(value) {
-  return normalizeText(value)
-    .replace(/^@+/, "")
-    .replace(/\s+/g, "")
-    .replace(/[^a-z0-9._]/g, "")
-    .slice(0, 24);
-}
-
-function escapeHTML(value) {
-  return String(value || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function showMessage(message) {
-  const toast = document.getElementById("toast");
-
-  if (toast) {
-    toast.textContent = message;
-    toast.classList.add("show");
-
-    setTimeout(() => {
-      toast.classList.remove("show");
-    }, 3000);
-  } else {
-    alert(message);
-  }
-}
