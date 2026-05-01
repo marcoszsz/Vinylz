@@ -1,8 +1,3 @@
-/* ===============================
-   VINYL PROFILE JS
-   Ajuste o caminho do firebase.js se necessário.
-================================ */
-
 import { auth, db, storage } from "./firebase.js";
 
 import {
@@ -32,9 +27,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-/* ===============================
-   ELEMENTOS
-================================ */
+/* ELEMENTOS */
 
 const navbarLinks = document.getElementById("navbarLinks");
 const mobileMenuBtn = document.getElementById("mobileMenuBtn");
@@ -48,6 +41,7 @@ const profileAvatar = document.getElementById("profileAvatar");
 const profileDisplayName = document.getElementById("profileDisplayName");
 const profileUsername = document.getElementById("profileUsername");
 const profileBio = document.getElementById("profileBio");
+const profileSocialLinks = document.getElementById("profileSocialLinks");
 
 const currentTrackText = document.getElementById("currentTrackText");
 const favoriteAlbumText = document.getElementById("favoriteAlbumText");
@@ -94,6 +88,13 @@ const editFavoriteArtist = document.getElementById("editFavoriteArtist");
 const editFavoriteAlbum = document.getElementById("editFavoriteAlbum");
 const editTopGenre = document.getElementById("editTopGenre");
 
+const editX = document.getElementById("editX");
+const editInstagram = document.getElementById("editInstagram");
+const editFacebook = document.getElementById("editFacebook");
+const editTikTok = document.getElementById("editTikTok");
+const editYouTube = document.getElementById("editYouTube");
+const editWebsite = document.getElementById("editWebsite");
+
 const privacyModal = document.getElementById("privacyModal");
 const openPrivacyModalBtn = document.getElementById("openPrivacyModalBtn");
 const closePrivacyModalBtn = document.getElementById("closePrivacyModalBtn");
@@ -110,9 +111,7 @@ const deleteAccountBtn = document.getElementById("deleteAccountBtn");
 
 const toast = document.getElementById("toast");
 
-/* ===============================
-   ESTADO
-================================ */
+/* ESTADO */
 
 let currentUser = null;
 let currentUserData = null;
@@ -123,9 +122,7 @@ const fallbackAvatar = "https://placehold.co/300x300/111111/ff4d6d?text=VINYL";
 const fallbackBanner = "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1600&q=80";
 const fallbackCover = "https://placehold.co/300x300/111111/ff4d6d?text=♪";
 
-/* ===============================
-   HELPERS
-================================ */
+/* HELPERS */
 
 function showToast(message) {
   if (!toast) return;
@@ -173,6 +170,29 @@ function normalizeUsername(username) {
     .replace(/[^a-z0-9._]/g, "");
 }
 
+function normalizeUrl(url) {
+  const value = String(url || "").trim();
+
+  if (!value) return "";
+
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+
+  return `https://${value}`;
+}
+
+function isValidProfileUrl(url) {
+  if (!url) return true;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 function getDisplayName(data) {
   return data?.displayName || data?.name || currentUser?.displayName || "Usuário Vinyl";
 }
@@ -208,9 +228,7 @@ async function uploadImage(file, folder) {
   return await getDownloadURL(storageRef);
 }
 
-/* ===============================
-   NAVBAR
-================================ */
+/* NAVBAR */
 
 mobileMenuBtn?.addEventListener("click", () => {
   navbarLinks?.classList.toggle("open");
@@ -226,9 +244,7 @@ logoutBtn?.addEventListener("click", async () => {
   }
 });
 
-/* ===============================
-   AUTH
-================================ */
+/* AUTH */
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -242,9 +258,7 @@ onAuthStateChanged(auth, async (user) => {
   await loadUserContent();
 });
 
-/* ===============================
-   LOAD PROFILE
-================================ */
+/* LOAD PROFILE */
 
 async function loadProfile() {
   try {
@@ -261,6 +275,14 @@ async function loadProfile() {
         favoriteGenres: [],
         favoriteArtists: [],
         favoriteAlbums: [],
+        socialLinks: {
+          x: "",
+          instagram: "",
+          facebook: "",
+          tiktok: "",
+          youtube: "",
+          website: ""
+        },
         privacy: {
           privateProfile: false,
           allowDirectMessages: true,
@@ -295,11 +317,13 @@ function renderProfile() {
   if (profileAvatar) profileAvatar.src = avatar;
   if (profileDisplayName) profileDisplayName.textContent = displayName;
   if (profileUsername) profileUsername.textContent = `@${username}`;
+
   if (profileBio) {
     profileBio.textContent = currentUserData?.bio || "Sua bio musical aparecerá aqui.";
   }
 
   setBannerImage(banner);
+  renderSocialLinks();
 
   if (currentTrackText) {
     currentTrackText.textContent = currentUserData?.currentTrack || "Nenhuma música";
@@ -361,9 +385,74 @@ function renderProfile() {
   }
 }
 
-/* ===============================
-   RENDER FAVORITES
-================================ */
+/* SOCIAL LINKS */
+
+function renderSocialLinks() {
+  if (!profileSocialLinks) return;
+
+  const links = currentUserData?.socialLinks || {};
+
+  const socials = [
+    {
+      key: "x",
+      label: "X",
+      icon: "𝕏",
+      url: links.x
+    },
+    {
+      key: "instagram",
+      label: "Instagram",
+      icon: "📸",
+      url: links.instagram
+    },
+    {
+      key: "facebook",
+      label: "Facebook",
+      icon: "f",
+      url: links.facebook
+    },
+    {
+      key: "tiktok",
+      label: "TikTok",
+      icon: "♪",
+      url: links.tiktok
+    },
+    {
+      key: "youtube",
+      label: "YouTube",
+      icon: "▶",
+      url: links.youtube
+    },
+    {
+      key: "website",
+      label: "Site",
+      icon: "🔗",
+      url: links.website
+    }
+  ];
+
+  const activeSocials = socials.filter((item) => item.url);
+
+  if (!activeSocials.length) {
+    profileSocialLinks.innerHTML = "";
+    return;
+  }
+
+  profileSocialLinks.innerHTML = activeSocials.map((item) => `
+    <a
+      class="social-link social-link-${safeText(item.key)}"
+      href="${safeText(item.url)}"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="${safeText(item.label)}"
+    >
+      <span>${safeText(item.icon)}</span>
+      ${safeText(item.label)}
+    </a>
+  `).join("");
+}
+
+/* FAVORITES */
 
 function renderGenres(genres) {
   if (!favoriteGenresList) return;
@@ -441,9 +530,7 @@ function renderAlbums(albums) {
   }).join("");
 }
 
-/* ===============================
-   LOAD USER CONTENT
-================================ */
+/* CONTENT */
 
 async function loadUserContent() {
   await Promise.all([
@@ -588,9 +675,7 @@ function getActivityIcon(type) {
   return icons[type] || "🎧";
 }
 
-/* ===============================
-   TABS
-================================ */
+/* TABS */
 
 const tabButtons = document.querySelectorAll(".profile-tabs button");
 const tabPanels = document.querySelectorAll(".profile-tab-panel");
@@ -611,9 +696,7 @@ favoritesBtn?.addEventListener("click", () => {
   document.querySelector('[data-tab="favorites"]')?.click();
 });
 
-/* ===============================
-   EDIT MODAL
-================================ */
+/* EDIT MODAL */
 
 function openEditModal() {
   if (!editProfileModal) return;
@@ -664,6 +747,15 @@ function fillEditModal() {
   if (editTopGenre) {
     editTopGenre.value = currentUserData.topGenre || "";
   }
+
+  const socialLinks = currentUserData?.socialLinks || {};
+
+  if (editX) editX.value = socialLinks.x || "";
+  if (editInstagram) editInstagram.value = socialLinks.instagram || "";
+  if (editFacebook) editFacebook.value = socialLinks.facebook || "";
+  if (editTikTok) editTikTok.value = socialLinks.tiktok || "";
+  if (editYouTube) editYouTube.value = socialLinks.youtube || "";
+  if (editWebsite) editWebsite.value = socialLinks.website || "";
 
   setBannerImage(currentUserData.bannerURL || currentUserData.banner || fallbackBanner);
 }
@@ -728,6 +820,24 @@ editProfileForm?.addEventListener("submit", async (event) => {
     return;
   }
 
+  const socialLinks = {
+    x: normalizeUrl(editX?.value),
+    instagram: normalizeUrl(editInstagram?.value),
+    facebook: normalizeUrl(editFacebook?.value),
+    tiktok: normalizeUrl(editTikTok?.value),
+    youtube: normalizeUrl(editYouTube?.value),
+    website: normalizeUrl(editWebsite?.value)
+  };
+
+  const invalidSocial = Object.values(socialLinks).find((url) => {
+    return url && !isValidProfileUrl(url);
+  });
+
+  if (invalidSocial) {
+    showToast("Um dos links sociais não é válido.");
+    return;
+  }
+
   const submitBtn = editProfileForm.querySelector("button[type='submit']");
   submitBtn.disabled = true;
   submitBtn.textContent = "Salvando...";
@@ -755,6 +865,7 @@ editProfileForm?.addEventListener("submit", async (event) => {
       favoriteArtist: editFavoriteArtist.value.trim(),
       favoriteAlbum: editFavoriteAlbum.value.trim(),
       topGenre: editTopGenre.value.trim(),
+      socialLinks,
       updatedAt: serverTimestamp()
     };
 
@@ -780,9 +891,7 @@ editProfileForm?.addEventListener("submit", async (event) => {
   }
 });
 
-/* ===============================
-   QUICK BANNER
-================================ */
+/* QUICK BANNER */
 
 changeBannerBtn?.addEventListener("click", () => {
   quickBannerInput?.click();
@@ -816,9 +925,7 @@ quickBannerInput?.addEventListener("change", async () => {
   }
 });
 
-/* ===============================
-   PRIVACY
-================================ */
+/* PRIVACY */
 
 function openPrivacyModal() {
   if (!privacyModal) return;
@@ -904,9 +1011,7 @@ privacyForm?.addEventListener("submit", async (event) => {
   }
 });
 
-/* ===============================
-   SHARE
-================================ */
+/* SHARE */
 
 shareProfileBtn?.addEventListener("click", async () => {
   const username = getUsername(currentUserData);
@@ -928,9 +1033,7 @@ shareProfileBtn?.addEventListener("click", async () => {
   }
 });
 
-/* ===============================
-   DELETE ACCOUNT
-================================ */
+/* DELETE ACCOUNT */
 
 deleteAccountBtn?.addEventListener("click", async () => {
   if (!currentUser) return;
