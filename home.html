@@ -13,7 +13,6 @@
 
 <body>
 
-  <!-- BACKGROUND FX -->
   <div class="app-bg"></div>
 
   <!-- NAVBAR -->
@@ -169,16 +168,14 @@
             </div>
 
             <div>
-              <strong id="heroSongsCount">0</strong>
+              <strong id="heroSongsCount">∞</strong>
               <span>sons</span>
             </div>
           </div>
         </div>
 
         <div class="hero-vinyl" aria-hidden="true">
-          <div class="vinyl-disc">
-            <div class="vinyl-center"></div>
-          </div>
+          <div class="vinyl-disc"></div>
         </div>
 
       </section>
@@ -231,7 +228,6 @@
             <span id="postCounter">0</span>/500
           </div>
 
-          <!-- PREVIEW DA MÚSICA/ÁLBUM/ARTISTA ANEXADO -->
           <div class="attached-music-preview" id="attachedMusicPreview" hidden>
             <img
               src="https://placehold.co/160x160/111111/ff4d6d?text=♪"
@@ -254,7 +250,7 @@
 
             <div class="composer-tools">
               <button type="button" id="addMusicBtn">
-                ♪ Anexar música
+                ♪ Música
               </button>
 
               <button type="button" id="addImageBtn">
@@ -381,7 +377,7 @@
 
   </div>
 
-  <!-- MODAL DE STORY -->
+  <!-- MODAL DE CRIAR STORY -->
   <div class="story-modal" id="storyModal" hidden>
 
     <div class="story-backdrop" id="closeStoryBackdrop"></div>
@@ -412,6 +408,70 @@
 
     </section>
 
+  </div>
+
+  <!-- VIEWER DE STORY -->
+  <div class="story-viewer-modal" id="storyViewerModal" hidden>
+    <div class="story-viewer-backdrop" id="closeStoryViewerBackdrop"></div>
+
+    <section class="story-viewer-card">
+
+      <div class="story-progress">
+        <span id="storyProgressBar"></span>
+      </div>
+
+      <header class="story-viewer-header">
+        <div class="story-viewer-user">
+          <img
+            src="https://placehold.co/120x120/111111/ff4d6d?text=V"
+            alt="Avatar"
+            id="storyViewerAvatar"
+          />
+
+          <div>
+            <strong id="storyViewerName">Usuário</strong>
+            <span id="storyViewerTime">agora</span>
+          </div>
+        </div>
+
+        <button type="button" id="closeStoryViewerBtn" aria-label="Fechar story">
+          ×
+        </button>
+      </header>
+
+      <div class="story-viewer-content">
+        <span class="story-viewer-label">Story</span>
+
+        <p id="storyViewerText">
+          Carregando story...
+        </p>
+
+        <div class="story-viewer-music" id="storyViewerMusic" hidden>
+          <div class="story-music-icon">♪</div>
+
+          <div>
+            <strong id="storyViewerMusicTitle">Música</strong>
+            <span id="storyViewerMusicArtist">Artista</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="story-viewer-reactions">
+        <button type="button" data-story-reaction="❤️">❤️</button>
+        <button type="button" data-story-reaction="🔥">🔥</button>
+        <button type="button" data-story-reaction="😭">😭</button>
+        <button type="button" data-story-reaction="🎧">🎧</button>
+      </div>
+
+      <button type="button" class="story-nav-btn story-prev-btn" id="prevStoryBtn">
+        ‹
+      </button>
+
+      <button type="button" class="story-nav-btn story-next-btn" id="nextStoryBtn">
+        ›
+      </button>
+
+    </section>
   </div>
 
   <!-- MODAL DE ANEXAR MÚSICA -->
@@ -499,9 +559,7 @@
   <!-- TOAST -->
   <div id="toast" class="toast"></div>
 
-  <!-- SCRIPTS -->
   <script type="module" src="home.js"></script>
-  <script src="firebase.js"></script>
 
 </body>
 

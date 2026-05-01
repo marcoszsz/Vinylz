@@ -1,8 +1,3 @@
-/* ===============================
-   VINYL HOME JS
-   Ajuste o import abaixo para o caminho certo do seu firebase.js
-================================ */
-
 import { auth, db } from "./firebase.js";
 
 import {
@@ -27,13 +22,10 @@ import {
   deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* ===============================
-   ELEMENTOS
-================================ */
+/* ELEMENTOS */
 
 const navbarLinks = document.getElementById("navbarLinks");
 const mobileMenuBtn = document.getElementById("mobileMenuBtn");
-
 const logoutBtn = document.getElementById("logoutBtn");
 
 const navbarAvatar = document.getElementById("navbarAvatar");
@@ -63,6 +55,20 @@ const closeStoryModalBtn = document.getElementById("closeStoryModalBtn");
 const storyForm = document.getElementById("storyForm");
 const storyInput = document.getElementById("storyInput");
 
+const storyViewerModal = document.getElementById("storyViewerModal");
+const closeStoryViewerBackdrop = document.getElementById("closeStoryViewerBackdrop");
+const closeStoryViewerBtn = document.getElementById("closeStoryViewerBtn");
+const storyViewerAvatar = document.getElementById("storyViewerAvatar");
+const storyViewerName = document.getElementById("storyViewerName");
+const storyViewerTime = document.getElementById("storyViewerTime");
+const storyViewerText = document.getElementById("storyViewerText");
+const storyViewerMusic = document.getElementById("storyViewerMusic");
+const storyViewerMusicTitle = document.getElementById("storyViewerMusicTitle");
+const storyViewerMusicArtist = document.getElementById("storyViewerMusicArtist");
+const storyProgressBar = document.getElementById("storyProgressBar");
+const prevStoryBtn = document.getElementById("prevStoryBtn");
+const nextStoryBtn = document.getElementById("nextStoryBtn");
+
 const notificationBadge = document.getElementById("notificationBadge");
 const openNotificationsBtn = document.getElementById("openNotificationsBtn");
 const openNotificationsBtnSide = document.getElementById("openNotificationsBtnSide");
@@ -88,7 +94,8 @@ const heroPostsCount = document.getElementById("heroPostsCount");
 const heroUsersCount = document.getElementById("heroUsersCount");
 const heroSongsCount = document.getElementById("heroSongsCount");
 
-/* Music picker */
+/* MUSIC PICKER */
+
 const addMusicBtn = document.getElementById("addMusicBtn");
 const musicPickerModal = document.getElementById("musicPickerModal");
 const closeMusicPickerBtn = document.getElementById("closeMusicPickerBtn");
@@ -104,9 +111,7 @@ const attachedMusicTitle = document.getElementById("attachedMusicTitle");
 const attachedMusicSubtitle = document.getElementById("attachedMusicSubtitle");
 const removeAttachedMusicBtn = document.getElementById("removeAttachedMusicBtn");
 
-/* ===============================
-   ESTADO
-================================ */
+/* ESTADO */
 
 let currentUser = null;
 let currentUserData = null;
@@ -114,12 +119,14 @@ let attachedMusic = null;
 let selectedMusicType = "track";
 let currentNotificationFilter = "all";
 
+let storiesCache = [];
+let activeStoryIndex = 0;
+let storyTimer = null;
+
 const fallbackAvatar = "https://placehold.co/300x300/111111/ff4d6d?text=V";
 const fallbackCover = "https://placehold.co/300x300/111111/ff4d6d?text=♪";
 
-/* ===============================
-   HELPERS
-================================ */
+/* HELPERS */
 
 function showToast(message) {
   if (!toast) return;
@@ -181,9 +188,7 @@ function getTypeLabel(type) {
   return labels[type] || "Música";
 }
 
-/* ===============================
-   NAVBAR
-================================ */
+/* NAVBAR */
 
 mobileMenuBtn?.addEventListener("click", () => {
   navbarLinks?.classList.toggle("open");
@@ -199,9 +204,7 @@ logoutBtn?.addEventListener("click", async () => {
   }
 });
 
-/* ===============================
-   AUTH
-================================ */
+/* AUTH */
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -212,9 +215,11 @@ onAuthStateChanged(auth, async (user) => {
   currentUser = user;
 
   await loadCurrentUser();
+
   listenStories();
   listenFeed();
   listenNotifications();
+
   loadSuggestions();
   loadStats();
   loadNowPlaying();
@@ -222,9 +227,7 @@ onAuthStateChanged(auth, async (user) => {
   loadChatWidget();
 });
 
-/* ===============================
-   USER
-================================ */
+/* USER */
 
 async function loadCurrentUser() {
   try {
@@ -262,9 +265,7 @@ async function loadCurrentUser() {
   }
 }
 
-/* ===============================
-   POST COUNTER
-================================ */
+/* POST COUNTER */
 
 postInput?.addEventListener("input", () => {
   if (postCounter) {
@@ -272,9 +273,7 @@ postInput?.addEventListener("input", () => {
   }
 });
 
-/* ===============================
-   MUSIC PICKER
-================================ */
+/* MUSIC PICKER */
 
 function openMusicPicker() {
   if (!musicPickerModal) return;
@@ -520,9 +519,7 @@ musicPickerInput?.addEventListener("keydown", (event) => {
   }
 });
 
-/* ===============================
-   CREATE POST
-================================ */
+/* CREATE POST */
 
 postForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -579,9 +576,7 @@ postForm?.addEventListener("submit", async (event) => {
   }
 });
 
-/* ===============================
-   FEED
-================================ */
+/* FEED */
 
 function listenFeed() {
   if (!feedContainer) return;
@@ -634,7 +629,7 @@ function renderFeed(posts) {
 
   if (!posts.length) {
     feedContainer.innerHTML = `
-      <p class="empty-state">Nenhum post ainda. Seja o primeiro a compartilhar sua vibe.</p>
+      <p class="empty-state">Nenhum post por enquanto.</p>
     `;
     return;
   }
@@ -719,9 +714,7 @@ async function likePost(postId) {
   if (!postId) return;
 
   try {
-    const postRef = doc(db, "posts", postId);
-
-    await updateDoc(postRef, {
+    await updateDoc(doc(db, "posts", postId), {
       likesCount: increment(1)
     });
   } catch (error) {
@@ -750,9 +743,7 @@ feedFilter?.addEventListener("change", () => {
   listenFeed();
 });
 
-/* ===============================
-   STORIES
-================================ */
+/* STORIES */
 
 function openStoryModal() {
   if (storyModal) {
@@ -790,6 +781,14 @@ storyForm?.addEventListener("submit", async (event) => {
       userUsername: getUserUsername(currentUserData, currentUser),
       userAvatar: getUserAvatar(currentUserData, currentUser),
       text,
+      music: attachedMusic ? {
+        id: attachedMusic.id || null,
+        type: attachedMusic.type || "track",
+        title: attachedMusic.title || "",
+        subtitle: attachedMusic.subtitle || "",
+        image: attachedMusic.image || "",
+        spotifyUrl: attachedMusic.spotifyUrl || null
+      } : null,
       createdAt: serverTimestamp()
     });
 
@@ -827,34 +826,189 @@ function listenStories() {
 function renderStories(stories) {
   if (!storiesList) return;
 
-  const ownStory = `
-    <div class="story-item" id="quickCreateStory">
+  storiesCache = [
+    {
+      id: "own-story",
+      userId: currentUser?.uid,
+      userName: "Seu story",
+      userUsername: "Você",
+      userAvatar: getUserAvatar(currentUserData, currentUser),
+      text: "Toque em + Story para compartilhar sua vibe musical.",
+      createdAt: null,
+      isOwnPlaceholder: true
+    },
+    ...stories
+  ];
+
+  storiesList.innerHTML = storiesCache.map((story, index) => `
+    <div class="story-item" data-story-index="${index}">
       <div class="story-avatar">
-        <img src="${safeText(getUserAvatar(currentUserData, currentUser))}" alt="Seu story">
+        <img src="${safeText(story.userAvatar || fallbackAvatar)}" alt="${safeText(story.userName || "Story")}">
       </div>
-      <span>Seu story</span>
+
+      <span>${safeText(story.userUsername || story.userName || "usuário")}</span>
     </div>
-  `;
+  `).join("");
 
-  if (!stories.length) {
-    storiesList.innerHTML = ownStory;
-  } else {
-    storiesList.innerHTML = ownStory + stories.map((story) => `
-      <div class="story-item" title="${safeText(story.text || "")}">
-        <div class="story-avatar">
-          <img src="${safeText(story.userAvatar || fallbackAvatar)}" alt="${safeText(story.userName || "Usuário")}">
-        </div>
-        <span>${safeText(story.userUsername || story.userName || "usuário")}</span>
-      </div>
-    `).join("");
-  }
+  document.querySelectorAll("[data-story-index]").forEach((item) => {
+    item.addEventListener("click", () => {
+      const index = Number(item.dataset.storyIndex);
 
-  document.getElementById("quickCreateStory")?.addEventListener("click", openStoryModal);
+      if (storiesCache[index]?.isOwnPlaceholder) {
+        openStoryModal();
+        return;
+      }
+
+      openStoryViewer(index);
+    });
+  });
 }
 
-/* ===============================
-   NOTIFICATIONS
-================================ */
+/* STORY VIEWER */
+
+function openStoryViewer(index = 0) {
+  if (!storyViewerModal || !storiesCache.length) return;
+
+  activeStoryIndex = index;
+  storyViewerModal.hidden = false;
+
+  renderActiveStory();
+}
+
+function closeStoryViewer() {
+  if (!storyViewerModal) return;
+
+  storyViewerModal.hidden = true;
+
+  if (storyTimer) {
+    clearTimeout(storyTimer);
+    storyTimer = null;
+  }
+
+  if (storyProgressBar) {
+    storyProgressBar.classList.remove("playing");
+    storyProgressBar.style.width = "0%";
+  }
+}
+
+function renderActiveStory() {
+  const story = storiesCache[activeStoryIndex];
+
+  if (!story) {
+    closeStoryViewer();
+    return;
+  }
+
+  if (storyViewerAvatar) {
+    storyViewerAvatar.src = story.userAvatar || fallbackAvatar;
+  }
+
+  if (storyViewerName) {
+    storyViewerName.textContent = story.userName || story.userUsername || "Usuário";
+  }
+
+  if (storyViewerTime) {
+    storyViewerTime.textContent = story.createdAt ? formatDate(story.createdAt) : "agora";
+  }
+
+  if (storyViewerText) {
+    storyViewerText.textContent = story.text || story.content || "Story sem texto.";
+  }
+
+  if (story.music) {
+    storyViewerMusic.hidden = false;
+
+    if (storyViewerMusicTitle) {
+      storyViewerMusicTitle.textContent = story.music.title || "Música";
+    }
+
+    if (storyViewerMusicArtist) {
+      storyViewerMusicArtist.textContent = story.music.subtitle || story.music.artist || "Vinyl";
+    }
+  } else {
+    storyViewerMusic.hidden = true;
+  }
+
+  restartStoryProgress();
+}
+
+function restartStoryProgress() {
+  if (storyTimer) {
+    clearTimeout(storyTimer);
+    storyTimer = null;
+  }
+
+  if (!storyProgressBar) return;
+
+  storyProgressBar.classList.remove("playing");
+  storyProgressBar.style.width = "0%";
+
+  void storyProgressBar.offsetWidth;
+
+  storyProgressBar.classList.add("playing");
+
+  storyTimer = setTimeout(() => {
+    nextStory();
+  }, 6000);
+}
+
+function nextStory() {
+  if (!storiesCache.length) return;
+
+  const nextIndex = activeStoryIndex + 1;
+
+  if (nextIndex >= storiesCache.length) {
+    closeStoryViewer();
+    return;
+  }
+
+  activeStoryIndex = nextIndex;
+  renderActiveStory();
+}
+
+function prevStory() {
+  if (!storiesCache.length) return;
+
+  const prevIndex = activeStoryIndex - 1;
+
+  if (prevIndex < 1) {
+    activeStoryIndex = 1;
+  } else {
+    activeStoryIndex = prevIndex;
+  }
+
+  renderActiveStory();
+}
+
+closeStoryViewerBtn?.addEventListener("click", closeStoryViewer);
+closeStoryViewerBackdrop?.addEventListener("click", closeStoryViewer);
+nextStoryBtn?.addEventListener("click", nextStory);
+prevStoryBtn?.addEventListener("click", prevStory);
+
+document.querySelectorAll("[data-story-reaction]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const reaction = button.dataset.storyReaction;
+    showToast(`Você reagiu com ${reaction}`);
+  });
+});
+
+document.addEventListener("keydown", (event) => {
+  if (storyViewerModal?.hidden) return;
+
+  if (event.key === "Escape") {
+    closeStoryViewer();
+  }
+
+  if (event.key === "ArrowRight") {
+    nextStory();
+  }
+
+  if (event.key === "ArrowLeft") {
+    prevStory();
+  }
+});
+
+/* NOTIFICATIONS */
 
 function openNotifications() {
   if (notificationsModal) {
@@ -977,6 +1131,7 @@ function renderMiniNotifications(notifications) {
   miniNotificationsList.innerHTML = notifications.map((item) => `
     <div class="notification-mini-item">
       <img src="${safeText(item.fromUserAvatar || fallbackAvatar)}" alt="Avatar">
+
       <div>
         <strong>${safeText(item.title || "Notificação")}</strong>
         <span>${safeText(item.message || "Nova interação")}</span>
@@ -985,9 +1140,7 @@ function renderMiniNotifications(notifications) {
   `).join("");
 }
 
-/* ===============================
-   SUGGESTIONS
-================================ */
+/* SUGGESTIONS */
 
 async function loadSuggestions() {
   if (!suggestionsList || !currentUser) return;
@@ -1036,9 +1189,7 @@ async function loadSuggestions() {
   }
 }
 
-/* ===============================
-   STATS
-================================ */
+/* STATS */
 
 async function loadStats() {
   try {
@@ -1053,9 +1204,7 @@ async function loadStats() {
   }
 }
 
-/* ===============================
-   NOW PLAYING
-================================ */
+/* NOW PLAYING */
 
 function loadNowPlaying() {
   if (!nowPlayingBox) return;
@@ -1087,9 +1236,7 @@ function loadNowPlaying() {
   `;
 }
 
-/* ===============================
-   POPULAR REVIEWS
-================================ */
+/* POPULAR REVIEWS */
 
 function loadPopularReviews() {
   if (!popularReviewsBox) return;
@@ -1104,9 +1251,7 @@ function loadPopularReviews() {
   `;
 }
 
-/* ===============================
-   CHAT WIDGET
-================================ */
+/* CHAT */
 
 openChatWidgetBtn?.addEventListener("click", () => {
   if (chatWidget) {
@@ -1175,9 +1320,7 @@ async function loadChatWidget(searchTerm = "") {
   }
 }
 
-/* ===============================
-   IMAGE BUTTON PLACEHOLDER
-================================ */
+/* IMAGE BUTTON */
 
 document.getElementById("addImageBtn")?.addEventListener("click", () => {
   showToast("Upload de imagem será conectado depois.");
