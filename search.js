@@ -400,37 +400,69 @@ function normalizeSpotifyResults(data) {
   return results;
 }
 
+/**
+ * Busca no iTunes com suporte a múltiplos tipos
+ * @async
+ * @param {string} term - Termo de busca
+ * @param {Array<string>} types - Tipos a buscar (track, album, artist, playlist)
+ * @returns {Promise<Array>} Resultados normalizados
+ */
 async function searchITunesFallback(term, types) {
-  try {
-    const entity = getITunesEntity(types);
+  if (!term?.trim()) return [];
 
-    const response = await fetch(
-      `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=${entity}&limit=30`
+  try {
+    const entities = getITunesEntities(types);
+    
+    if (!entities.length) return [];
+
+    // Fazer requisições paralelas para cada tipo
+    const requests = entities.map(entity =>
+      fetch(
+        `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=${entity}&limit=20`
+      )
     );
 
-    if (!response.ok) return [];
+    const responses = await Promise.all(requests);
+    const results = [];
 
-    const data = await response.json();
+    for (const response of responses) {
+      if (!response.ok) continue;
 
-    return (data.results || [])
-      .map((item) => normalizeITunesSearchItem(item))
-      .filter(Boolean)
-      .filter((item) => {
-        if (activeType === "all") return true;
-        return item.type === activeType;
-      });
+      const data = await response.json();
+      const items = (data.results || [])
+        .map((item) => normalizeITunesSearchItem(item))
+        .filter(Boolean);
+
+      results.push(...items);
+    }
+
+    // Filtrar por tipo ativo se necessário
+    if (activeType !== "all") {
+      return results.filter((item) => item.type === activeType);
+    }
+
+    return results;
   } catch (error) {
     console.error("Fallback iTunes falhou:", error);
     return [];
   }
 }
 
-function getITunesEntity(types) {
-  if (types.includes("track")) return "song";
-  if (types.includes("album")) return "album";
-  if (types.includes("artist")) return "musicArtist";
+/**
+ * Retorna array de entidades iTunes baseado nos tipos solicitados
+ * @param {Array<string>} types - Tipos (track, album, artist, playlist)
+ * @returns {Array<string>} Entidades iTunes
+ */
+function getITunesEntities(types) {
+  const entities = [];
 
-  return "song";
+  if (types.includes("track")) entities.push("song");
+  if (types.includes("album")) entities.push("album");
+  if (types.includes("artist")) entities.push("musicArtist");
+
+  // playlist não existe no iTunes, então ignoramos
+
+  return entities.length > 0 ? entities : ["song"];
 }
 
 function normalizeITunesSearchItem(item) {
