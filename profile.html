@@ -77,6 +77,8 @@
             Sua bio musical aparecerá aqui.
           </p>
 
+          <div class="profile-social-links" id="profileSocialLinks"></div>
+
           <div class="music-identity-row">
             <div>
               <span>🎧 Ouvindo agora</span>
@@ -417,6 +419,64 @@
           />
         </div>
 
+        <div class="form-divider">
+          <span>Redes sociais</span>
+        </div>
+
+        <div class="input-group">
+          <label for="editX">X / Twitter</label>
+          <input
+            type="url"
+            id="editX"
+            placeholder="https://x.com/seuusuario"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editInstagram">Instagram</label>
+          <input
+            type="url"
+            id="editInstagram"
+            placeholder="https://instagram.com/seuusuario"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editFacebook">Facebook</label>
+          <input
+            type="url"
+            id="editFacebook"
+            placeholder="https://facebook.com/seuusuario"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editTikTok">TikTok</label>
+          <input
+            type="url"
+            id="editTikTok"
+            placeholder="https://tiktok.com/@seuusuario"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editYouTube">YouTube</label>
+          <input
+            type="url"
+            id="editYouTube"
+            placeholder="https://youtube.com/@seucanal"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editWebsite">Site pessoal</label>
+          <input
+            type="url"
+            id="editWebsite"
+            placeholder="https://seusite.com"
+          />
+        </div>
+
         <button type="submit" class="primary-btn full-btn">
           Salvar alterações
         </button>
@@ -532,15 +592,12 @@
     </div>
   </div>
 
-  <!-- INPUT REAL PARA TROCAR BANNER FORA DO MODAL -->
   <input type="file" id="quickBannerInput" accept="image/*" hidden />
 
-  <!-- BOTÃO PRIVACIDADE -->
   <button class="privacy-floating-btn" id="openPrivacyModalBtn" title="Privacidade" type="button">
     ⚙
   </button>
 
-  <!-- TOAST -->
   <div id="toast" class="toast"></div>
 
   <script type="module" src="profile.js"></script>
