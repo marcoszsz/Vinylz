@@ -36,6 +36,10 @@
         <span class="notification-badge" id="notificationBadge" hidden>0</span>
       </button>
 
+      <button type="button" class="dm-btn" id="openMessagesBtn" aria-label="Abrir mensagens">
+        ✉️
+      </button>
+
       <a href="profile.html" class="navbar-profile">
         <img
           src="https://placehold.co/120x120/111111/ff4d6d?text=V"
@@ -519,40 +523,42 @@
 
   </div>
 
-  <!-- CHAT WIDGET -->
-  <button type="button" class="chat-widget-button" id="openChatWidgetBtn" aria-label="Abrir mensagens">
-    💬
-  </button>
-
+  <!-- CHAT / MENSAGENS -->
   <section class="chat-widget" id="chatWidget" hidden>
 
-    <header class="chat-widget-header">
-      <div>
-        <h3>Mensagens</h3>
-        <p>Conversas recentes</p>
+    <div class="chat-widget-backdrop" id="closeChatWidgetBackdrop"></div>
+
+    <div class="chat-widget-panel">
+
+      <header class="chat-widget-header">
+        <div>
+          <h3>Mensagens</h3>
+          <p>Conversas recentes</p>
+        </div>
+
+        <button type="button" id="closeChatWidgetBtn" aria-label="Fechar mensagens">
+          ×
+        </button>
+      </header>
+
+      <div class="chat-widget-search">
+        <input
+          type="text"
+          id="chatSearchInput"
+          placeholder="Buscar usuário..."
+          autocomplete="off"
+        />
       </div>
 
-      <button type="button" id="closeChatWidgetBtn" aria-label="Fechar mensagens">
-        ×
-      </button>
-    </header>
+      <div id="chatWidgetList" class="chat-widget-list">
+        <p class="empty-state">Carregando conversas...</p>
+      </div>
 
-    <div class="chat-widget-search">
-      <input
-        type="text"
-        id="chatSearchInput"
-        placeholder="Buscar usuário..."
-        autocomplete="off"
-      />
+      <a href="messages.html" class="chat-widget-link">
+        Abrir mensagens completas
+      </a>
+
     </div>
-
-    <div id="chatWidgetList" class="chat-widget-list">
-      <p class="empty-state">Carregando conversas...</p>
-    </div>
-
-    <a href="messages.html" class="chat-widget-link">
-      Abrir mensagens
-    </a>
 
   </section>
 
