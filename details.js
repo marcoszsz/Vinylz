@@ -215,13 +215,12 @@ async function fetchSpotifyDetails(type, id) {
       throw new Error("Erro ao buscar detalhes no Spotify.");
     }
 
-    return await response.json();
+    const data = await response.json();
+    return normalizeSpotifyDetails(data, type, id);
   } catch (error) {
     console.error("Erro ao buscar Spotify:", error);
     throw error;
   }
-
-  return normalizeSpotifyDetails(data, type, id);
 }
 
 /**
@@ -365,13 +364,36 @@ function normalizeITunesDetails(item, typeFromUrl) {
       ? "album"
       : typeFromUrl || "track";
 
+  // Construir descrição melhorada baseado no tipo
+  let description = "";
+  
+  if (type === "track") {
+    const parts = [];
+    if (item.collectionName) parts.push(`Álbum: ${item.collectionName}`);
+    if (item.primaryGenreName) parts.push(`Gênero: ${item.primaryGenreName}`);
+    description = parts.length > 0 ? parts.join(" • ") : "Música no iTunes";
+  } else if (type === "album") {
+    const parts = [];
+    if (item.trackCount) parts.push(`${item.trackCount} faixas`);
+    if (item.primaryGenreName) parts.push(`Gênero: ${item.primaryGenreName}`);
+    description = parts.length > 0 ? parts.join(" • ") : "Álbum no iTunes";
+  } else if (type === "artist") {
+    if (item.primaryGenreName) {
+      description = `Gênero: ${item.primaryGenreName}`;
+    } else {
+      description = "Artista no iTunes";
+    }
+  } else {
+    description = item.primaryGenreName || "Catálogo musical";
+  }
+
   return {
     id: String(item.trackId || item.collectionId || item.artistId || ""),
     source: "itunes",
     type,
     title: item.trackName || item.collectionName || item.artistName || "Sem título",
     subtitle: item.artistName || "",
-    description: item.collectionName || item.primaryGenreName || "Catálogo musical",
+    description: description,
     image: upgradeITunesImage(item.artworkUrl100) || DEFAULT_COVER,
     url: item.trackViewUrl || item.collectionViewUrl || item.artistViewUrl || "",
     releaseDate: item.releaseDate || "",
@@ -426,7 +448,7 @@ function renderDetails(item) {
   if (openExternalBtn) {
     openExternalBtn.href = item.url || "#";
     openExternalBtn.hidden = !item.url;
-    openExternalBtn.textContent = item.source === "itunes" ? "Abrir no iTunes" : "Abrir no Spotify";
+    openExternalBtn.textContent = item.source === "itunes" ? "Abrir na App Store" : "Abrir no Spotify";
   }
 }
 
@@ -624,25 +646,32 @@ async function searchUsers(term) {
   }
 }
 
+/**
+ * Renderiza lista de usuários para enviar item
+ * @param {Array<Object>} users - Lista de usuários
+ */
 function renderSendChatUsers(users) {
   sendChatUsersList.innerHTML = "";
 
-  if (!users.length) {
+  if (!Array.isArray(users) || !users.length) {
     sendChatUsersList.innerHTML = `<p class="muted-text">Nenhum usuário encontrado.</p>`;
     return;
   }
 
   users.forEach((user) => {
+    if (!user?.id || !user?.title) return;
+
     const button = document.createElement("button");
     button.type = "button";
     button.className = "send-chat-user";
+    button.setAttribute("aria-label", `Enviar para ${user.title}`);
 
     button.innerHTML = `
-      <img src="${escapeHTML(user.image || DEFAULT_AVATAR)}" alt="${escapeHTML(user.title)}">
+      <img src="${escapeHTML(user.image || DEFAULT_AVATAR)}" alt="Foto de ${escapeHTML(user.title)}" loading="lazy">
 
       <div>
         <strong>${escapeHTML(user.title)}</strong>
-        <span>${escapeHTML(user.subtitle)}</span>
+        <span>${escapeHTML(user.subtitle || "")}</span>
       </div>
 
       <small>Enviar</small>
@@ -656,8 +685,13 @@ function renderSendChatUsers(users) {
   });
 }
 
+/**
+ * Envia item para um usuário via chat
+ * @async
+ * @param {Object} user - Usuário destinatário
+ */
 async function sendItemToUser(user) {
-  if (!currentUser || !currentItem || !user?.id) return;
+  if (!currentUser?.uid || !currentItem?.id || !user?.id) return;
 
   try {
     const chatId = createChatId(currentUser.uid, user.id);
@@ -676,9 +710,9 @@ async function sendItemToUser(user) {
       url: currentItem.url || "",
       preview: currentItem.url
         ? {
-            provider: currentItem.source === "itunes" ? "Apple Music / iTunes" : "Spotify",
+            provider: currentItem.source === "itunes" ? "Apple Music" : "Spotify",
             title: currentItem.title,
-            description: currentItem.subtitle || currentItem.description || "",
+            description: currentItem.description || currentItem.subtitle || "",
             image: currentItem.image || "",
             url: currentItem.url,
             icon: "♪"
