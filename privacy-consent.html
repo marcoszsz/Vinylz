@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vinyl - Privacidade</title>
+  <link rel="stylesheet" href="auth.css">
+</head>
+
+<body class="privacy-consent-body">
+  <main class="auth-page privacy-page">
+    <div class="auth-background"></div>
+
+    <section class="auth-card privacy-card" aria-labelledby="privacyTitle">
+      <a href="index.html" class="auth-logo">VINYL</a>
+
+      <span class="auth-tag">Antes de continuar</span>
+
+      <h1 id="privacyTitle">Sua privacidade importa</h1>
+
+      <p>
+        O Vinyl usa seus dados para montar seu perfil musical, conectar voce com
+        pessoas de gosto parecido e melhorar sua experiencia dentro do app.
+      </p>
+
+      <div class="privacy-points" aria-label="Resumo de privacidade">
+        <article>
+          <strong>Voce controla seu perfil</strong>
+          <span>Nas configuracoes, voce pode deixar o perfil privado, ocultar favoritos e limitar mensagens.</span>
+        </article>
+
+        <article>
+          <strong>Spotify so com permissao</strong>
+          <span>Se conectar o Spotify, usamos a permissao apenas para mostrar sua atividade musical no app.</span>
+        </article>
+
+        <article>
+          <strong>Dados para melhorar a experiencia</strong>
+          <span>Favoritos, reviews e artistas ocultos ajudam o Vinyl a personalizar catalogo, galeria e compatibilidade.</span>
+        </article>
+      </div>
+
+      <label class="terms-check">
+        <input type="checkbox" id="termsCheck">
+        <span>Li e aceito os termos de uso e a politica de privacidade do Vinyl.</span>
+      </label>
+
+      <button type="button" class="auth-btn" id="acceptPrivacyBtn" disabled>
+        Aceitar e continuar
+      </button>
+
+      <div class="auth-footer privacy-alt-links">
+        <a href="login.html" data-auth-link>Entrar</a>
+        <span>ou</span>
+        <a href="register.html" data-auth-link>Criar conta</a>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="privacy-consent.js"></script>
+</body>
+</html>

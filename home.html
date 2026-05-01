@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>VINYL — Home</title>
+
+  <link rel="stylesheet" href="home.css" />
+  <meta name="theme-color" content="#0b0b0d" />
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+
+    <a href="home.html" class="logo">VINYL</a>
+
+    <nav class="navbar-links" id="navbarLinks">
+      <a href="home.html" class="active">Home</a>
+      <a href="search.html">Catálogo</a>
+      <a href="timeline.html">Timeline</a>
+      <a href="profile.html">Perfil</a>
+    </nav>
+
+    <div class="navbar-actions">
+
+      <button type="button" class="notification-btn" id="openNotificationsBtn" aria-label="Abrir notificações">
+        <span class="notification-icon">🔔</span>
+        <span class="notification-badge" id="notificationBadge" hidden>0</span>
+      </button>
+
+      <a href="profile.html" class="navbar-profile">
+        <img
+          src="https://placehold.co/120x120/111111/ff4d6d?text=V"
+          alt="Avatar"
+          id="navbarAvatar"
+        />
+        <span id="navbarUsername">Perfil</span>
+      </a>
+
+      <button type="button" class="logout-btn" id="logoutBtn">
+        Sair
+      </button>
+
+      <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menu">
+        ☰
+      </button>
+
+    </div>
+
+  </header>
+
+  <!-- LAYOUT PRINCIPAL -->
+  <main class="home-layout">
+
+    <!-- SIDEBAR ESQUERDA -->
+    <aside class="left-sidebar">
+
+      <section class="sidebar-card profile-summary-card">
+
+        <img
+          class="profile-summary-avatar"
+          src="https://placehold.co/300x300/111111/ff4d6d?text=VINYL"
+          alt="Avatar"
+          id="homeProfileAvatar"
+        />
+
+        <h2 id="homeDisplayName">Carregando...</h2>
+        <p id="homeUsername">@usuario</p>
+
+        <div class="profile-stats">
+          <div>
+            <strong id="homeFollowersCount">0</strong>
+            <span>Seguidores</span>
+          </div>
+
+          <div>
+            <strong id="homeFollowingCount">0</strong>
+            <span>Seguindo</span>
+          </div>
+        </div>
+
+        <a href="profile.html" class="sidebar-primary-link">
+          Ver perfil
+        </a>
+
+      </section>
+
+      <section class="sidebar-card">
+        <h3>Atalhos</h3>
+
+        <div class="shortcut-list">
+          <a href="search.html">Buscar músicas</a>
+          <a href="timeline.html">Timeline</a>
+          <a href="messages.html">Mensagens</a>
+          <a href="profile.html">Editar perfil</a>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- FEED CENTRAL -->
+    <section class="main-feed">
+
+      <section class="welcome-card">
+        <div>
+          <span class="eyebrow">Bem-vindo ao Vinyl</span>
+          <h1>Compartilhe sua vibe musical.</h1>
+          <p>
+            Poste reviews, favorite artistas e descubra o que a galera está ouvindo.
+          </p>
+        </div>
+      </section>
+
+      <!-- STORIES -->
+      <section class="stories-section">
+        <div class="section-header">
+          <h2>Stories</h2>
+
+          <button type="button" id="createStoryBtn">
+            + Story
+          </button>
+        </div>
+
+        <div class="stories-list" id="storiesList">
+          <p class="empty-state">Carregando stories...</p>
+        </div>
+      </section>
+
+      <!-- CRIAR POST -->
+      <section class="composer-card">
+
+        <div class="composer-user">
+          <img
+            src="https://placehold.co/120x120/111111/ff4d6d?text=V"
+            alt="Avatar"
+            id="composerAvatar"
+          />
+
+          <div>
+            <strong id="composerName">Você</strong>
+            <span>Compartilhar com a comunidade</span>
+          </div>
+        </div>
+
+        <form id="postForm" class="post-form">
+
+          <textarea
+            id="postInput"
+            placeholder="O que você está ouvindo agora?"
+            maxlength="500"
+          ></textarea>
+
+          <div class="composer-footer">
+
+            <div class="composer-tools">
+              <button type="button" id="addMusicBtn">
+                ♪ Música
+              </button>
+
+              <button type="button" id="addImageBtn">
+                Imagem
+              </button>
+            </div>
+
+            <button type="submit" id="publishPostBtn">
+              Publicar
+            </button>
+
+          </div>
+
+        </form>
+
+      </section>
+
+      <!-- FEED -->
+      <section class="feed-section">
+
+        <div class="section-header">
+          <h2>Feed</h2>
+
+          <select id="feedFilter" aria-label="Filtro do feed">
+            <option value="recent">Recentes</option>
+            <option value="following">Seguindo</option>
+            <option value="popular">Populares</option>
+          </select>
+        </div>
+
+        <div id="feedContainer" class="feed-container">
+          <p class="empty-state">Carregando feed...</p>
+        </div>
+
+      </section>
+
+    </section>
+
+    <!-- SIDEBAR DIREITA -->
+    <aside class="right-sidebar">
+
+      <section class="sidebar-card">
+        <h3>Notificações recentes</h3>
+
+        <div id="miniNotificationsList" class="mini-notifications-list">
+          <p class="empty-state">Carregando...</p>
+        </div>
+
+        <button type="button" class="text-btn" id="openNotificationsBtnSide">
+          Ver todas
+        </button>
+      </section>
+
+      <section class="sidebar-card">
+        <h3>Sugestões</h3>
+
+        <div id="suggestionsList" class="suggestions-list">
+          <p class="empty-state">Carregando sugestões...</p>
+        </div>
+      </section>
+
+      <section class="sidebar-card now-playing-card">
+        <h3>Agora no Vinyl</h3>
+
+        <div id="nowPlayingBox">
+          <p class="empty-state">
+            Conecte seu Spotify para mostrar sua música atual.
+          </p>
+        </div>
+      </section>
+
+    </aside>
+
+  </main>
+
+  <!-- MODAL DE NOTIFICAÇÕES -->
+  <div class="notifications-modal" id="notificationsModal" hidden>
+
+    <div class="notifications-backdrop" id="closeNotificationsBackdrop"></div>
+
+    <section class="notifications-panel">
+
+      <header class="notifications-header">
+        <div>
+          <h2>Notificações</h2>
+          <p>Pedidos para seguir, novos seguidores e interações.</p>
+        </div>
+
+        <button type="button" id="closeNotificationsBtn" aria-label="Fechar notificações">
+          ×
+        </button>
+      </header>
+
+      <div class="notifications-tabs">
+        <button type="button" class="active" data-notification-filter="all">
+          Todas
+        </button>
+
+        <button type="button" data-notification-filter="follow_request">
+          Pedidos
+        </button>
+
+        <button type="button" data-notification-filter="unread">
+          Não lidas
+        </button>
+      </div>
+
+      <div id="notificationsList" class="notifications-list">
+        <p class="empty-state">Carregando notificações...</p>
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- MODAL DE STORY -->
+  <div class="story-modal" id="storyModal" hidden>
+
+    <div class="story-backdrop" id="closeStoryBackdrop"></div>
+
+    <section class="story-panel">
+
+      <header class="story-header">
+        <h2>Novo story</h2>
+
+        <button type="button" id="closeStoryModalBtn" aria-label="Fechar">
+          ×
+        </button>
+      </header>
+
+      <form id="storyForm">
+
+        <textarea
+          id="storyInput"
+          placeholder="Compartilhe uma música, frase ou momento..."
+          maxlength="220"
+        ></textarea>
+
+        <button type="submit">
+          Publicar story
+        </button>
+
+      </form>
+
+    </section>
+
+  </div>
+
+  <!-- CHAT WIDGET -->
+  <button type="button" class="chat-widget-button" id="openChatWidgetBtn" aria-label="Abrir mensagens">
+    💬
+  </button>
+
+  <section class="chat-widget" id="chatWidget" hidden>
+
+    <header class="chat-widget-header">
+      <div>
+        <h3>Mensagens</h3>
+        <p>Conversas recentes</p>
+      </div>
+
+      <button type="button" id="closeChatWidgetBtn" aria-label="Fechar mensagens">
+        ×
+      </button>
+    </header>
+
+    <div class="chat-widget-search">
+      <input
+        type="text"
+        id="chatSearchInput"
+        placeholder="Buscar usuário..."
+        autocomplete="off"
+      />
+    </div>
+
+    <div id="chatWidgetList" class="chat-widget-list">
+      <p class="empty-state">Carregando conversas...</p>
+    </div>
+
+    <a href="messages.html" class="chat-widget-link">
+      Abrir mensagens
+    </a>
+
+  </section>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <!-- SCRIPTS -->
+  <script type="module" src="protect.js"></script>
+  <script type="module" src="home.js"></script>
+  <script type="module" src="notifications.js"></script>
+  <script type="module" src="chat-widget.js"></script>
+
+</body>
+
+</html>

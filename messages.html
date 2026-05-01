@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vinyl — Mensagens</title>
+  <link rel="stylesheet" href="messages.css">
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="home.html" class="logo">VINYL</a>
+
+    <nav>
+      <a href="home.html">Home</a>
+      <a href="search.html">Catálogo</a>
+      <a href="social.html">Social</a>
+      <a href="messages.html">Mensagens</a>
+      <a href="profile.html">Perfil</a>
+    </nav>
+  </header>
+
+  <main class="messages-page">
+    <section class="messages-header">
+      <span class="tag">Chat privado</span>
+      <h1>Mensagens</h1>
+      <p>Veja suas conversas e continue falando com outros usuários.</p>
+    </section>
+
+    <section class="messages-search">
+      <input id="userSearchInput" type="text" placeholder="Buscar usuário para conversar...">
+    </section>
+
+    <section id="searchResults" class="messages-list"></section>
+
+    <section class="messages-section">
+      <h2>Conversas recentes</h2>
+
+      <div id="messagesList" class="messages-list">
+        <p class="message">Carregando conversas...</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="messages.js"></script>
+  <script type="module" src="protect.js"></script>
+  <script type="module" src="logout.js"></script>
+</body>
+</html>

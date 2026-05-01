@@ -1,0 +1,354 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  background: #0f0f0f;
+  color: white;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.navbar {
+  width: 100%;
+  padding: 24px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(10,10,10,0.9);
+  border-bottom: 1px solid #222;
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+}
+
+.logo {
+  color: #ff4d6d;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 4px;
+}
+
+nav {
+  display: flex;
+  gap: 28px;
+}
+
+nav a {
+  color: #ddd;
+}
+
+.review-page {
+  min-height: 100vh;
+  padding: 150px 20px 80px;
+  background:
+    radial-gradient(circle at top, rgba(255,77,109,0.14), transparent 35%),
+    #0f0f0f;
+}
+
+.review-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.review-card {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 40px;
+  background: #171717;
+  border: 1px solid #292929;
+  border-radius: 32px;
+  padding: 32px;
+}
+
+.review-cover {
+  width: 100%;
+  border-radius: 24px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.review-info h1 {
+  font-size: clamp(42px, 6vw, 72px);
+  margin-bottom: 12px;
+}
+
+.review-info p {
+  color: #aaa;
+  margin-bottom: 26px;
+}
+
+.review-box {
+  margin-top: 24px;
+}
+
+.review-box textarea {
+  width: 100%;
+  min-height: 180px;
+  resize: none;
+  background: #101010;
+  border: 1px solid #333;
+  border-radius: 18px;
+  padding: 18px;
+  color: white;
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+
+.review-box textarea:focus {
+  outline: none;
+  border-color: #ff4d6d;
+}
+
+.rating {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.star {
+  font-size: 34px;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: 0.2s;
+}
+
+.star.active {
+  opacity: 1;
+}
+
+.save-btn {
+  border: none;
+  background: #ff4d6d;
+  color: white;
+  padding: 14px 24px;
+  border-radius: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.message {
+  text-align: center;
+  color: #888;
+}
+
+@media (max-width: 900px) {
+  .review-card {
+    grid-template-columns: 1fr;
+  }
+
+  .navbar {
+    padding: 20px;
+  }
+
+  nav {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+
+  body {
+    overflow-x: hidden;
+  }
+
+  /* NAVBAR */
+
+  .navbar {
+    padding: 16px 18px;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .logo {
+    font-size: 24px;
+    letter-spacing: 3px;
+  }
+
+  nav {
+    gap: 14px;
+    font-size: 14px;
+  }
+
+  nav a {
+    font-size: 13px;
+  }
+
+  /* HERO */
+
+  .hero,
+  .profile-hero,
+  .details-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 28px;
+  }
+
+  .hero h1,
+  .profile-info h1,
+  .details-info h1 {
+    font-size: 42px;
+    line-height: 1.05;
+  }
+
+  .hero p,
+  .profile-info p,
+  .artist-biography p {
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  .hero-actions,
+  .details-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .primary-btn,
+  .secondary-btn,
+  .follow-btn,
+  .save-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* DETAILS */
+
+  .details-image {
+    position: relative;
+    top: 0;
+  }
+
+  .details-image img {
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+    display: block;
+    border-radius: 28px;
+  }
+
+  .details-meta {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 22px;
+  }
+
+  /* GRIDS */
+
+  .music-grid,
+  .favorites-grid,
+  .cards-grid,
+  .discography-grid,
+  .related-grid,
+  .horizontal-scroll {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  /* CARDS */
+
+  .favorite-card,
+  .item-card,
+  .album-card,
+  .related-card,
+  .track-card {
+    border-radius: 18px;
+  }
+
+  .favorite-card img,
+  .item-card img,
+  .album-card img,
+  .related-card img {
+    aspect-ratio: 1 / 1;
+  }
+
+  .favorite-card-content,
+  .item-content,
+  .album-content {
+    padding: 14px;
+  }
+
+  .favorite-card h3,
+  .item-card h3,
+  .album-content h3 {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .favorite-card p,
+  .item-card p,
+  .album-content p {
+    font-size: 13px;
+  }
+
+  /* TITLES */
+
+  .section-header h2,
+  .detail-block h2 {
+    font-size: 28px;
+  }
+
+  /* PAGE */
+
+  .home-page,
+  .favorites-page,
+  .details-page,
+  .profile-page {
+    padding: 28px 18px 70px;
+  }
+
+  /* PROFILE */
+
+  .user-avatar {
+    width: 130px;
+    height: 130px;
+    margin: 0 auto;
+  }
+
+  .profile-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .profile-stats div {
+    min-width: unset;
+  }
+
+  /* SEARCH */
+
+  .search-bar,
+  .search-wrapper,
+  .search-controls {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .search-bar input {
+    width: 100%;
+  }
+
+  /* REVIEWS */
+
+  .public-review-card {
+    padding: 18px;
+  }
+
+  .review-user {
+    align-items: flex-start;
+  }
+
+  .review-user img {
+    width: 42px;
+    height: 42px;
+  }
+}

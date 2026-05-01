@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Conectando Spotify...</title>
+</head>
+<body>
+<script type="module">
+  import { auth, db } from "./firebase.js";
+
+  import {
+    doc,
+    setDoc,
+    serverTimestamp,
+    deleteField
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  import {
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const params = new URLSearchParams(
+    window.location.hash ? window.location.hash.slice(1) : window.location.search
+  );
+
+  const accessToken = params.get("access_token");
+  const refreshToken = params.get("refresh_token");
+
+  window.history.replaceState({}, document.title, "spotify-callback.html");
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user || !accessToken) {
+      window.location.href = "profile.html?spotify=error";
+      return;
+    }
+
+    await setDoc(
+      doc(db, "users", user.uid, "private", "spotify"),
+      {
+        accessToken,
+        refreshToken: refreshToken || "",
+        connectedAt: serverTimestamp(),
+        tokenRefreshedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        spotifyConnected: true,
+        spotifyConnectedAt: serverTimestamp(),
+        spotifyToken: deleteField(),
+        spotifyRefreshToken: deleteField(),
+        spotifyTokenExpiresAt: deleteField(),
+        spotifyTokenRefreshedAt: deleteField()
+      },
+      { merge: true }
+    );
+
+    window.location.href = "profile.html?spotify=connected";
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,529 @@
+:root {
+  --bg: #0f0f0f;
+  --card: #171717;
+  --card-2: #101010;
+  --border: #292929;
+  --text: #ffffff;
+  --muted: #aaa;
+  --pink: #ff4d6d;
+  --pink-dark: #ff3358;
+  --green: #1db954;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Inter, Arial, Helvetica, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(255, 77, 109, 0.13), transparent 30%),
+    var(--bg);
+  color: white;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.navbar {
+  width: 100%;
+  padding: 22px 60px;
+  background: rgba(8, 8, 8, 0.94);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.logo {
+  color: var(--pink);
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 5px;
+}
+
+nav {
+  display: flex;
+  gap: 26px;
+}
+
+nav a {
+  color: #ddd;
+  transition: .25s;
+}
+
+nav a:hover {
+  color: var(--pink);
+}
+
+.recent-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 70px 24px 120px;
+}
+
+.recent-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 390px;
+  border-radius: 36px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, #171717, #101010);
+  padding: 50px;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 38px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.hero-blur {
+  position: absolute;
+  inset: -80px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(70px);
+  opacity: .23;
+  transform: scale(1.15);
+}
+
+.hero-content,
+.now-card {
+  position: relative;
+  z-index: 2;
+}
+
+.status-pill,
+.tag {
+  display: inline-block;
+  width: fit-content;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(255,77,109,.12);
+  border: 1px solid rgba(255,77,109,.25);
+  color: var(--pink);
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 22px;
+}
+
+.recent-hero h1 {
+  font-size: clamp(56px, 7vw, 94px);
+  line-height: .95;
+  margin-bottom: 22px;
+}
+
+.recent-hero p {
+  color: #cfcfcf;
+  font-size: 17px;
+  line-height: 1.7;
+  max-width: 620px;
+}
+
+.now-card {
+  background: rgba(10,10,10,.72);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 30px;
+  padding: 22px;
+  backdrop-filter: blur(18px);
+}
+
+.now-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 24px;
+  object-fit: cover;
+  margin-bottom: 18px;
+}
+
+.now-card span {
+  color: var(--pink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.now-card h2 {
+  font-size: 26px;
+  margin: 8px 0;
+}
+
+.now-card p {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.now-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.now-actions a {
+  flex: 1;
+  background: var(--pink);
+  padding: 13px;
+  border-radius: 14px;
+  text-align: center;
+  font-weight: 800;
+}
+
+.spotify-reconnect-card span {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 77, 109, 0.13);
+  color: var(--pink);
+  font-weight: 900;
+  margin-bottom: 14px;
+}
+
+.spotify-reconnect-card h2 {
+  margin-bottom: 10px;
+}
+
+.spotify-reconnect-card p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.stat-card,
+.mood-section,
+.side-card,
+.track-card {
+  background: linear-gradient(180deg, var(--card), var(--card-2));
+  border: 1px solid var(--border);
+}
+
+.stat-card {
+  border-radius: 26px;
+  padding: 26px;
+}
+
+.stat-card span {
+  color: var(--muted);
+}
+
+.stat-card strong {
+  display: block;
+  font-size: 38px;
+  color: var(--pink);
+  margin: 10px 0;
+}
+
+.stat-card p {
+  color: var(--muted);
+}
+
+.mood-section {
+  border-radius: 30px;
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 30px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.mood-section h2 {
+  font-size: 38px;
+  margin-bottom: 12px;
+}
+
+.mood-section p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.mood-bars {
+  display: grid;
+  gap: 14px;
+}
+
+.mood-row {
+  display: grid;
+  gap: 8px;
+}
+
+.mood-row-header {
+  display: flex;
+  justify-content: space-between;
+  color: #ddd;
+  font-size: 14px;
+}
+
+.mood-track {
+  height: 10px;
+  background: #232323;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mood-fill {
+  height: 100%;
+  background: var(--pink);
+  border-radius: 999px;
+}
+
+.filter-section {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.filter-chip {
+  border: 1px solid #333;
+  background: #171717;
+  color: white;
+  padding: 11px 18px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.filter-chip.active,
+.filter-chip:hover {
+  background: var(--pink);
+  border-color: var(--pink);
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 330px;
+  gap: 28px;
+  align-items: start;
+}
+
+.section-title {
+  margin-bottom: 20px;
+}
+
+.section-title h2 {
+  font-size: 38px;
+}
+
+.recent-timeline {
+  display: grid;
+  gap: 18px;
+}
+
+.day-group {
+  display: grid;
+  gap: 12px;
+}
+
+.day-title {
+  color: #ddd;
+  font-size: 18px;
+  margin: 12px 0 4px;
+}
+
+.track-card {
+  display: grid;
+  grid-template-columns: 74px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  border-radius: 24px;
+  padding: 14px;
+  transition: .25s;
+}
+
+.track-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--pink);
+  box-shadow: 0 0 30px rgba(255,77,109,.14);
+}
+
+.track-card img {
+  width: 74px;
+  height: 74px;
+  border-radius: 18px;
+  object-fit: cover;
+}
+
+.track-info h3 {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.track-info p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.track-time {
+  color: #777;
+  font-size: 13px;
+}
+
+.spotify-btn {
+  background: var(--pink);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.side-panel {
+  display: grid;
+  gap: 18px;
+  position: sticky;
+  top: 110px;
+}
+
+.side-card {
+  border-radius: 26px;
+  padding: 22px;
+}
+
+.side-card h3 {
+  font-size: 22px;
+  margin-bottom: 18px;
+}
+
+.top-artists-list {
+  display: grid;
+  gap: 12px;
+}
+
+.artist-row {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.artist-rank {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255,77,109,.12);
+  color: var(--pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
+
+.artist-row strong {
+  font-size: 15px;
+}
+
+.artist-row span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.activity-bars {
+  display: grid;
+  gap: 12px;
+}
+
+.activity-row {
+  display: grid;
+  grid-template-columns: 55px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.activity-row span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.activity-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #232323;
+  overflow: hidden;
+}
+
+.activity-fill {
+  height: 100%;
+  background: var(--pink);
+}
+
+.message {
+  color: #888;
+  padding: 24px 0;
+}
+
+@media (max-width: 980px) {
+  .recent-hero,
+  .mood-section,
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .now-card {
+    max-width: 420px;
+  }
+
+  .side-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 22px 20px;
+  }
+
+  nav {
+    display: none;
+  }
+
+  .recent-page {
+    padding: 36px 18px 110px;
+  }
+
+  .recent-hero {
+    padding: 28px;
+    border-radius: 28px;
+  }
+
+  .recent-hero h1 {
+    font-size: 50px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .track-card {
+    grid-template-columns: 62px 1fr;
+  }
+
+  .track-card img {
+    width: 62px;
+    height: 62px;
+  }
+
+  .track-time,
+  .spotify-btn {
+    grid-column: 2;
+  }
+
+  .spotify-btn {
+    width: fit-content;
+  }
+}

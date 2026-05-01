@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vinyl — Detalhes</title>
+  <link rel="stylesheet" href="details.css">
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="home.html" class="logo">VINYL</a>
+
+    <nav>
+      <a href="home.html">Home</a>
+      <a href="search.html">Catálogo</a>
+      <a href="social.html">Social</a>
+      <a href="timeline.html">Timeline</a>
+      <a href="profile.html">Perfil</a>
+    </nav>
+  </header>
+
+  <main class="details-page">
+
+    <section class="details-layout">
+
+      <div class="details-image">
+        <img id="detailsImage" src="" alt="">
+      </div>
+
+      <div class="details-info">
+        <span id="detailsType" class="details-tag">Carregando...</span>
+
+        <h1 id="detailsTitle">Carregando...</h1>
+
+        <div id="detailsMeta" class="details-meta">
+          <p>Buscando informações...</p>
+        </div>
+
+        <div class="artist-biography">
+          <h3>Sobre</h3>
+          <p id="artistBiography">Carregando...</p>
+        </div>
+
+        <div class="details-actions">
+          <button id="favoriteDetailBtn" class="favorite-detail-btn">
+            ♡ Favoritar
+          </button>
+
+          <button id="hideArtistBtn" class="hide-artist-btn" hidden>
+            Ocultar artista
+          </button>
+
+          <a id="reviewLink" class="secondary-btn">
+            Escrever review
+          </a>
+
+          <a id="spotifyLink" target="_blank" class="primary-btn">
+            Abrir no Spotify
+          </a>
+
+          <a href="search.html" class="secondary-btn">
+            Voltar ao catálogo
+          </a>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="details-sections">
+
+      <section class="detail-block">
+        <h2 id="tracksSectionTitle">Top músicas</h2>
+
+        <div id="topTracks" class="horizontal-scroll">
+          <p class="message">Carregando músicas...</p>
+        </div>
+      </section>
+
+      <section class="detail-block" id="discographyBlock">
+        <h2>Discografia</h2>
+
+        <div id="discography" class="discography-grid">
+          <p class="message">Carregando discografia...</p>
+        </div>
+      </section>
+
+      <section class="detail-block" id="relatedBlock">
+        <h2>Artistas relacionados</h2>
+
+        <div id="relatedArtists" class="related-grid">
+          <p class="message">Carregando artistas...</p>
+        </div>
+      </section>
+
+      <section class="detail-block">
+        <h2>Reviews da comunidade</h2>
+
+        <div id="publicReviews" class="reviews-list">
+          <p class="message">Carregando reviews...</p>
+        </div>
+      </section>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="details.js"></script>
+  <script type="module" src="protect.js"></script>
+</body>
+</html>
