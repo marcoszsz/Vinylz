@@ -8,6 +8,7 @@ import {
 import {
   doc,
   getDoc,
+  getDocs,
   setDoc,
   addDoc,
   collection,
@@ -15,9 +16,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* =========================
-   ELEMENTOS
+   ELEMENTOS DO DOM
 ========================= */
 
+/**
+ * Elementos de navegação e autenticação
+ */
 const logoutBtn = document.getElementById("logoutBtn");
 const navbarAvatar = document.getElementById("navbarAvatar");
 const navbarUsername = document.getElementById("navbarUsername");
@@ -49,12 +53,22 @@ const sendChatUsersList = document.getElementById("sendChatUsersList");
 
 const toast = document.getElementById("toast");
 
+/**
+ * Constantes de configuração
+ */
 const DEFAULT_AVATAR = "https://placehold.co/120x120/111111/ff4d6d?text=V";
 const DEFAULT_COVER = "https://placehold.co/800x800/111111/ff4d6d?text=VINYL";
+const DEBOUNCE_DELAY = 350;
+const MAX_SEARCH_RESULTS = 12;
+const TOAST_DURATION = 2600;
 
+/**
+ * Estado da aplicação
+ */
 let currentUser = null;
 let currentUserData = null;
 let currentItem = null;
+let userSearchCache = new Map();
 
 /* =========================
    PARAMS
@@ -96,7 +110,13 @@ logoutBtn?.addEventListener("click", async () => {
    NAVBAR
 ========================= */
 
+/**
+ * Carrega dados do usuário para a barra de navegação
+ * @async
+ */
 async function loadNavbarUser() {
+  if (!currentUser?.uid) return;
+
   try {
     const snap = await getDoc(doc(db, "users", currentUser.uid));
 
@@ -127,9 +147,13 @@ async function loadNavbarUser() {
 }
 
 /* =========================
-   LOAD DETAILS
+   CARREGAMENTO DE DETALHES
 ========================= */
 
+/**
+ * Carrega detalhes do item (artista, álbum, música ou playlist)
+ * @async
+ */
 async function loadDetails() {
   if (!itemType || !itemId) {
     renderError("Detalhes inválidos.");
@@ -172,42 +196,76 @@ function detectSource(id) {
   return "spotify";
 }
 
+/**
+ * Busca detalhes no Spotify
+ * @async
+ * @param {string} type - Tipo do item (track, album, artist, playlist)
+ * @param {string} id - ID do item no Spotify
+ * @returns {Promise<Object>} Dados normalizados do item
+ */
 async function fetchSpotifyDetails(type, id) {
-  const response = await fetch(
-    `/api/spotifyDetails?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`
-  );
+  if (!type || !id) throw new Error("Tipo ou ID inválido.");
 
-  if (!response.ok) {
-    throw new Error("Erro ao buscar detalhes no Spotify.");
+  try {
+    const response = await fetch(
+      `/api/spotifyDetails?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar detalhes no Spotify.");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Erro ao buscar Spotify:", error);
+    throw error;
   }
-
-  const data = await response.json();
 
   return normalizeSpotifyDetails(data, type, id);
 }
 
+/**
+ * Busca detalhes no iTunes/Apple Music
+ * @async
+ * @param {string} type - Tipo do item
+ * @param {string} id - ID do item no iTunes
+ * @returns {Promise<Object|null>} Dados normalizados do item
+ */
 async function fetchITunesDetails(type, id) {
-  const response = await fetch(
-    `https://itunes.apple.com/lookup?id=${encodeURIComponent(id)}`
-  );
+  if (!id) throw new Error("ID inválido.");
 
-  if (!response.ok) {
-    throw new Error("Erro ao buscar detalhes no iTunes.");
+  try {
+    const response = await fetch(
+      `https://itunes.apple.com/lookup?id=${encodeURIComponent(id)}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar detalhes no iTunes.");
+    }
+
+    const data = await response.json();
+    const item = data.results?.[0];
+
+    if (!item) return null;
+
+    return normalizeITunesDetails(item, type);
+  } catch (error) {
+    console.error("Erro ao buscar iTunes:", error);
+    throw error;
   }
-
-  const data = await response.json();
-
-  const item = data.results?.[0];
-
-  if (!item) return null;
-
-  return normalizeITunesDetails(item, type);
 }
 
 /* =========================
-   NORMALIZE DETAILS
+   NORMALIZAÇÃO DE DETALHES
 ========================= */
 
+/**
+ * Normaliza dados do Spotify para formato padrão
+ * @param {Object} data - Dados brutos do Spotify
+ * @param {string} type - Tipo do item
+ * @param {string} id - ID do item
+ * @returns {Object} Objeto normalizado
+ */
 function normalizeSpotifyDetails(data, type, id) {
   const item = data.item || data;
 
@@ -292,7 +350,15 @@ function normalizeSpotifyDetails(data, type, id) {
   };
 }
 
+/**
+ * Normaliza dados do iTunes para formato padrão
+ * @param {Object} item - Item do iTunes
+ * @param {string} typeFromUrl - Tipo passado na URL
+ * @returns {Object} Objeto normalizado
+ */
 function normalizeITunesDetails(item, typeFromUrl) {
+  if (!item) return null;
+
   const type = item.wrapperType === "artist"
     ? "artist"
     : item.collectionType === "Album"
@@ -316,10 +382,15 @@ function normalizeITunesDetails(item, typeFromUrl) {
 }
 
 /* =========================
-   RENDER
+   RENDERIZAÇÃO
 ========================= */
 
+/**
+ * Renderiza os detalhes do item na página
+ * @param {Object} item - Item a renderizar
+ */
 function renderDetails(item) {
+  if (!item) return;
   if (detailsContent) detailsContent.hidden = false;
   if (detailsError) detailsError.hidden = true;
 
@@ -359,6 +430,10 @@ function renderDetails(item) {
   }
 }
 
+/**
+ * Renderiza mensagem de erro
+ * @param {string} message - Mensagem de erro
+ */
 function renderError(message) {
   if (detailsContent) detailsContent.hidden = true;
 
@@ -367,12 +442,16 @@ function renderError(message) {
     detailsError.innerHTML = `
       <div class="empty-vinyl-icon">!</div>
       <h2>Ops...</h2>
-      <p>${escapeHTML(message)}</p>
+      <p>${escapeHTML(message || "Erro desconhecido")}</p>
       <a href="search.html">Voltar ao catálogo</a>
     `;
   }
 }
 
+/**
+ * Controla o estado de carregamento
+ * @param {boolean} isLoading - Estado de carregamento
+ */
 function setLoading(isLoading) {
   if (detailsLoading) detailsLoading.hidden = !isLoading;
 
@@ -383,9 +462,12 @@ function setLoading(isLoading) {
 }
 
 /* =========================
-   ACTIONS
+   AÇÕES DO USUÁRIO
 ========================= */
 
+/**
+ * Event listener para favoritar item
+ */
 favoriteBtn?.addEventListener("click", () => {
   if (!currentItem) return;
   favoriteItem(currentItem);
@@ -401,8 +483,13 @@ sendChatBtn?.addEventListener("click", () => {
   openSendChatModal(currentItem);
 });
 
+/**
+ * Adiciona item aos favoritos
+ * @async
+ * @param {Object} item - Item a favoritar
+ */
 async function favoriteItem(item) {
-  if (!currentUser || !item) return;
+  if (!currentUser?.uid || !item?.id) return;
 
   try {
     const favoriteId = `${item.type}_${item.source || "unknown"}_${item.id}`.replaceAll("/", "_");
@@ -426,7 +513,13 @@ async function favoriteItem(item) {
   }
 }
 
+/**
+ * Abre página de review para um item
+ * @param {Object} item - Item para o qual escrever review
+ */
 function openReviewForItem(item) {
+  if (!item?.id || !item?.title || !item?.type) return;
+
   const query = encodeURIComponent(item.title);
   const id = encodeURIComponent(item.id);
   const type = encodeURIComponent(item.type);
@@ -436,9 +529,13 @@ function openReviewForItem(item) {
 }
 
 /* =========================
-   SEND TO CHAT
+   ENVIAR PARA CHAT
 ========================= */
 
+/**
+ * Abre modal para enviar item pelo chat
+ * @param {Object} item - Item a enviar
+ */
 function openSendChatModal(item) {
   if (!sendChatModal) return;
 
@@ -471,14 +568,29 @@ sendChatUserSearch?.addEventListener("input", debounce(async () => {
 
   const users = await searchUsers(term);
   renderSendChatUsers(users);
-}, 350));
+}, DEBOUNCE_DELAY));
 
+/**
+ * Busca usuários por termo
+ * @async
+ * @param {string} term - Termo de busca
+ * @returns {Promise<Array>} Lista de usuários encontrados
+ */
 async function searchUsers(term) {
+  if (!term?.trim()) return [];
+
   const normalized = normalizeText(term);
   const users = [];
 
+  // Verificar cache
+  const cacheKey = normalized.substring(0, 3);
+  if (userSearchCache.has(cacheKey)) {
+    return userSearchCache.get(cacheKey).filter(u => 
+      normalizeText(u.title + u.subtitle).includes(normalized)
+    );
+  }
+
   try {
-    const usersRef = collection(db, "users");
     const snap = await getDocs(collection(db, "users"));
 
     snap.forEach((docSnap) => {
@@ -500,7 +612,12 @@ async function searchUsers(term) {
       });
     });
 
-    return users.slice(0, 12);
+    // Cachear resultados
+    if (!userSearchCache.has(cacheKey)) {
+      userSearchCache.set(cacheKey, users);
+    }
+
+    return users.slice(0, MAX_SEARCH_RESULTS);
   } catch (error) {
     console.error("Erro ao buscar usuários:", error);
     return [];
@@ -591,10 +708,22 @@ async function sendItemToUser(user) {
    UTILS
 ========================= */
 
+/**
+ * Cria ID único para uma conversa
+ * @param {string} uid1 - UID do primeiro usuário
+ * @param {string} uid2 - UID do segundo usuário
+ * @returns {string} ID da conversa
+ */
 function createChatId(uid1, uid2) {
+  if (!uid1 || !uid2) throw new Error("UIDs inválidos.");
   return [uid1, uid2].sort().join("_");
 }
 
+/**
+ * Retorna label em português para tipo de item
+ * @param {string} type - Tipo do item
+ * @returns {string} Label em português
+ */
 function getTypeLabel(type) {
   const labels = {
     track: "Música",
@@ -606,35 +735,62 @@ function getTypeLabel(type) {
   return labels[type] || "Item";
 }
 
+/**
+ * Melhora resolução de imagens do iTunes
+ * @param {string} url - URL da imagem
+ * @returns {string} URL com melhor resolução
+ */
 function upgradeITunesImage(url) {
-  if (!url) return "";
+  if (!url || typeof url !== "string") return "";
 
   return url
     .replace("100x100bb", "800x800bb")
     .replace("100x100", "800x800");
 }
 
+/**
+ * Formata data para português
+ * @param {string|Date} value - Data a formatar
+ * @returns {string} Data formatada
+ */
 function formatDate(value) {
   if (!value) return "";
 
   try {
-    return new Date(value).toLocaleDateString("pt-BR");
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? value : date.toLocaleDateString("pt-BR");
   } catch {
     return value;
   }
 }
 
+/**
+ * Formata número para notação compacta
+ * @param {number} value - Número a formatar
+ * @returns {string} Número formatado
+ */
 function formatNumber(value) {
+  const num = Number(value) || 0;
   return new Intl.NumberFormat("pt-BR", {
     notation: "compact",
     maximumFractionDigits: 1
-  }).format(value || 0);
+  }).format(num);
 }
 
+/**
+ * Remove tags HTML de uma string
+ * @param {string} value - String com HTML
+ * @returns {string} String sem HTML
+ */
 function stripHTML(value) {
   return String(value || "").replace(/<[^>]*>/g, "").trim();
 }
 
+/**
+ * Normaliza texto removendo acentos e espaços
+ * @param {string} value - Texto a normalizar
+ * @returns {string} Texto normalizado
+ */
 function normalizeText(value) {
   return String(value || "")
     .toLowerCase()
@@ -643,6 +799,11 @@ function normalizeText(value) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+/**
+ * Escapa caracteres HTML
+ * @param {string} value - Texto a escapar
+ * @returns {string} Texto escapado
+ */
 function escapeHTML(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
@@ -652,21 +813,28 @@ function escapeHTML(value) {
     .replaceAll("'", "&#039;");
 }
 
+/**
+ * Debounce uma função
+ * @param {Function} fn - Função a debounce
+ * @param {number} delay - Delay em ms
+ * @returns {Function} Função debouncenada
+ */
 function debounce(fn, delay = 300) {
   let timeout;
 
   return (...args) => {
     clearTimeout(timeout);
-
-    timeout = setTimeout(() => {
-      fn(...args);
-    }, delay);
+    timeout = setTimeout(() => fn(...args), delay);
   };
 }
 
+/**
+ * Exibe notificação de toast
+ * @param {string} message - Mensagem a exibir
+ */
 function showToast(message) {
   if (!toast) {
-    alert(message);
+    alert(escapeHTML(message));
     return;
   }
 
@@ -675,5 +843,5 @@ function showToast(message) {
 
   setTimeout(() => {
     toast.classList.remove("show");
-  }, 2600);
+  }, TOAST_DURATION);
 }
