@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Explore detalhes de artistas, álbuns e músicas no Vinyl. Descubra informações completas, reviews da comunidade e recomendações personalizadas.">
+  <meta name="theme-color" content="#000000">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Vinyl — Detalhes de Artistas e Álbuns">
+  <meta property="og:description" content="Explore detalhes de artistas, álbuns e músicas no Vinyl.">
   <title>Vinyl — Detalhes</title>
   <link rel="stylesheet" href="details.css">
 </head>
@@ -25,7 +30,7 @@
     <section class="details-layout">
 
       <div class="details-image">
-        <img id="detailsImage" src="" alt="">
+        <img id="detailsImage" src="" alt="Capa do álbum ou foto do artista" loading="lazy">
       </div>
 
       <div class="details-info">
@@ -43,19 +48,19 @@
         </div>
 
         <div class="details-actions">
-          <button id="favoriteDetailBtn" class="favorite-detail-btn">
+          <button id="favoriteDetailBtn" class="favorite-detail-btn" aria-label="Adicionar aos favoritos">
             ♡ Favoritar
           </button>
 
-          <button id="hideArtistBtn" class="hide-artist-btn" hidden>
+          <button id="hideArtistBtn" class="hide-artist-btn" hidden aria-label="Ocultar este artista de resultados">
             Ocultar artista
           </button>
 
-          <a id="reviewLink" class="secondary-btn">
+          <a id="reviewLink" class="secondary-btn" aria-label="Escrever uma review sobre este artista">
             Escrever review
           </a>
 
-          <a id="spotifyLink" target="_blank" class="primary-btn">
+          <a id="spotifyLink" target="_blank" class="primary-btn" aria-label="Abrir este artista no Spotify">
             Abrir no Spotify
           </a>
 
@@ -67,9 +72,9 @@
 
     </section>
 
-    <section class="details-sections">
+    <section class="details-sections" aria-label="Informações adicionais">
 
-      <section class="detail-block">
+      <section class="detail-block" aria-label="Top músicas do artista">
         <h2 id="tracksSectionTitle">Top músicas</h2>
 
         <div id="topTracks" class="horizontal-scroll">
@@ -77,7 +82,7 @@
         </div>
       </section>
 
-      <section class="detail-block" id="discographyBlock">
+      <section class="detail-block" id="discographyBlock" aria-label="Discografia completa">
         <h2>Discografia</h2>
 
         <div id="discography" class="discography-grid">
@@ -85,7 +90,7 @@
         </div>
       </section>
 
-      <section class="detail-block" id="relatedBlock">
+      <section class="detail-block" id="relatedBlock" aria-label="Artistas relacionados">
         <h2>Artistas relacionados</h2>
 
         <div id="relatedArtists" class="related-grid">
@@ -93,7 +98,7 @@
         </div>
       </section>
 
-      <section class="detail-block">
+      <section class="detail-block" aria-label="Reviews da comunidade">
         <h2>Reviews da comunidade</h2>
 
         <div id="publicReviews" class="reviews-list">
