@@ -30,17 +30,22 @@ const detailsLoading = document.getElementById("detailsLoading");
 const detailsError = document.getElementById("detailsError");
 const detailsContent = document.getElementById("detailsContent");
 
-const detailCover = document.getElementById("detailCover");
-const detailType = document.getElementById("detailType");
-const detailTitle = document.getElementById("detailTitle");
-const detailSubtitle = document.getElementById("detailSubtitle");
-const detailDescription = document.getElementById("detailDescription");
-const detailMeta = document.getElementById("detailMeta");
+const detailsImage = document.getElementById("detailsImage");
+const detailsType = document.getElementById("detailsType");
+const detailsTitle = document.getElementById("detailsTitle");
+const artistBiography = document.getElementById("artistBiography");
+const detailsMeta = document.getElementById("detailsMeta");
+const topTracks = document.getElementById("topTracks");
+const discography = document.getElementById("discography");
+const relatedArtists = document.getElementById("relatedArtists");
+const publicReviews = document.getElementById("publicReviews");
 
-const openExternalBtn = document.getElementById("openExternalBtn");
-const favoriteBtn = document.getElementById("favoriteBtn");
-const reviewBtn = document.getElementById("reviewBtn");
-const sendChatBtn = document.getElementById("sendChatBtn");
+const favoriteDetailBtn = document.getElementById("favoriteDetailBtn");
+const hideArtistBtn = document.getElementById("hideArtistBtn");
+const reviewLink = document.getElementById("reviewLink");
+const spotifyLink = document.getElementById("spotifyLink");
+
+
 
 const sendChatModal = document.getElementById("sendChatModal");
 const closeSendChatBtn = document.getElementById("closeSendChatBtn");
@@ -78,7 +83,7 @@ const params = new URLSearchParams(window.location.search);
 
 const itemType = params.get("type");
 const itemId = params.get("id");
-const itemSource = params.get("source") || detectSource(itemId);
+const itemSource = (params.get("source") || detectSource(itemId)).toLowerCase();
 
 /* =========================
    AUTH
@@ -156,9 +161,12 @@ async function loadNavbarUser() {
  */
 async function loadDetails() {
   if (!itemType || !itemId) {
+    console.error("loadDetails: itemType ou itemId inválidos", { itemType, itemId });
     renderError("Detalhes inválidos.");
     return;
   }
+
+  console.log("loadDetails: Iniciando carregamento", { itemType, itemId, itemSource });
 
   try {
     setLoading(true);
@@ -166,20 +174,25 @@ async function loadDetails() {
     let data = null;
 
     if (itemSource === "spotify") {
+      console.log("loadDetails: Buscando no Spotify");
       data = await fetchSpotifyDetails(itemType, itemId);
     } else {
+      console.log("loadDetails: Buscando no iTunes");
       data = await fetchITunesDetails(itemType, itemId);
     }
 
     if (!data) {
+      console.error("loadDetails: Dados não encontrados");
       throw new Error("Detalhes não encontrados.");
     }
+
+    console.log("loadDetails: Dados carregados com sucesso", data);
 
     currentItem = data;
 
     renderDetails(data);
   } catch (error) {
-    console.error(error);
+    console.error("loadDetails: Erro ao carregar detalhes", error);
     renderError("Erro ao carregar detalhes.");
   } finally {
     setLoading(false);
@@ -233,6 +246,8 @@ async function fetchSpotifyDetails(type, id) {
 async function fetchITunesDetails(type, id) {
   if (!id) throw new Error("ID inválido.");
 
+  console.log("fetchITunesDetails: Iniciando busca", { type, id });
+
   try {
     const response = await fetch(
       `https://itunes.apple.com/lookup?id=${encodeURIComponent(id)}`
@@ -245,9 +260,14 @@ async function fetchITunesDetails(type, id) {
     const data = await response.json();
     const item = data.results?.[0];
 
-    if (!item) return null;
+    if (!item) {
+      console.error("fetchITunesDetails: Nenhum item encontrado nos resultados", data);
+      return null;
+    }
 
-    return normalizeITunesDetails(item, type);
+    const normalized = normalizeITunesDetails(item, type);
+    console.log("fetchITunesDetails: Dados normalizados", normalized);
+    return normalized;
   } catch (error) {
     console.error("Erro ao buscar iTunes:", error);
     throw error;
@@ -412,43 +432,80 @@ function normalizeITunesDetails(item, typeFromUrl) {
  * @param {Object} item - Item a renderizar
  */
 function renderDetails(item) {
-  if (!item) return;
+  if (!item) {
+    console.warn("renderDetails: Item é null/undefined");
+    return;
+  }
+
+  console.log("renderDetails: Renderizando item:", item);
+
   if (detailsContent) detailsContent.hidden = false;
   if (detailsError) detailsError.hidden = true;
 
-  if (detailCover) {
-    detailCover.src = item.image || DEFAULT_COVER;
-    detailCover.onerror = () => {
-      detailCover.src = DEFAULT_COVER;
+  // Imagem
+  if (detailsImage) {
+    detailsImage.src = item.image || DEFAULT_COVER;
+    detailsImage.onerror = () => {
+      detailsImage.src = DEFAULT_COVER;
     };
+  } else {
+    console.warn("renderDetails: Elemento detailsImage não encontrado");
   }
 
-  if (detailType) detailType.textContent = getTypeLabel(item.type);
-  if (detailTitle) detailTitle.textContent = item.title || "Sem título";
-  if (detailSubtitle) detailSubtitle.textContent = item.subtitle || "";
-  if (detailDescription) detailDescription.textContent = item.description || "Sem descrição disponível.";
+  // Tipo
+  if (detailsType) {
+    detailsType.textContent = getTypeLabel(item.type);
+  } else {
+    console.warn("renderDetails: Elemento detailsType não encontrado");
+  }
 
-  if (detailMeta) {
-    detailMeta.innerHTML = "";
+  // Título
+  if (detailsTitle) {
+    detailsTitle.textContent = item.title || "Sem título";
+  } else {
+    console.warn("renderDetails: Elemento detailsTitle não encontrado");
+  }
+
+  // Biografia/Descrição
+  if (artistBiography) {
+    artistBiography.textContent = item.description || "Sem descrição disponível.";
+  } else {
+    console.warn("renderDetails: Elemento artistBiography não encontrado");
+  }
+
+  // Meta informações
+  if (detailsMeta) {
+    detailsMeta.innerHTML = "";
 
     const metaItems = [
-      item.source ? `Fonte: ${item.source === "itunes" ? "iTunes" : "Spotify"}` : "",
+      item.source ? `Fonte: ${item.source === "itunes" ? "Apple Music" : "Spotify"}` : "",
       item.genre ? `Gênero: ${item.genre}` : "",
       item.releaseDate ? `Lançamento: ${formatDate(item.releaseDate)}` : "",
-      item.popularity !== null && item.popularity !== undefined ? `Popularidade: ${item.popularity}` : ""
+      item.type === "artist" && item.popularity ? `Popularidade: ${item.popularity}%` : ""
     ].filter(Boolean);
 
     metaItems.forEach((meta) => {
       const span = document.createElement("span");
       span.textContent = meta;
-      detailMeta.appendChild(span);
+      detailsMeta.appendChild(span);
     });
+  } else {
+    console.warn("renderDetails: Elemento detailsMeta não encontrado");
   }
 
-  if (openExternalBtn) {
-    openExternalBtn.href = item.url || "#";
-    openExternalBtn.hidden = !item.url;
-    openExternalBtn.textContent = item.source === "itunes" ? "Abrir na App Store" : "Abrir no Spotify";
+  // Botões de ação
+  if (spotifyLink) {
+    spotifyLink.href = item.url || "#";
+    spotifyLink.hidden = !item.url;
+    spotifyLink.textContent = item.source === "itunes" ? "Abrir na App Store" : "Abrir no Spotify";
+  } else {
+    console.warn("renderDetails: Elemento spotifyLink não encontrado");
+  }
+
+  if (reviewLink) {
+    reviewLink.href = `#`;
+  } else {
+    console.warn("renderDetails: Elemento reviewLink não encontrado");
   }
 }
 
@@ -490,19 +547,15 @@ function setLoading(isLoading) {
 /**
  * Event listener para favoritar item
  */
-favoriteBtn?.addEventListener("click", () => {
+favoriteDetailBtn?.addEventListener("click", () => {
   if (!currentItem) return;
   favoriteItem(currentItem);
 });
 
-reviewBtn?.addEventListener("click", () => {
+reviewLink?.addEventListener("click", (e) => {
+  e.preventDefault();
   if (!currentItem) return;
   openReviewForItem(currentItem);
-});
-
-sendChatBtn?.addEventListener("click", () => {
-  if (!currentItem) return;
-  openSendChatModal(currentItem);
 });
 
 /**
@@ -558,18 +611,22 @@ function openReviewForItem(item) {
  * Abre modal para enviar item pelo chat
  * @param {Object} item - Item a enviar
  */
+/**
+ * Abre modal para compartilhar item (apenas no chat modal)
+ * @param {Object} item - Item a compartilhar
+ */
 function openSendChatModal(item) {
-  if (!sendChatModal) return;
+  if (!sendChatModal || !item) return;
 
-  sendChatPreviewImage.src = item.image || DEFAULT_COVER;
-  sendChatPreviewTitle.textContent = item.title;
-  sendChatPreviewSubtitle.textContent = item.subtitle || getTypeLabel(item.type);
+  if (sendChatPreviewImage) sendChatPreviewImage.src = item.image || DEFAULT_COVER;
+  if (sendChatPreviewTitle) sendChatPreviewTitle.textContent = item.title;
+  if (sendChatPreviewSubtitle) sendChatPreviewSubtitle.textContent = item.subtitle || getTypeLabel(item.type);
 
-  sendChatUsersList.innerHTML = `<p class="muted-text">Busque um usuário para enviar.</p>`;
-  sendChatUserSearch.value = "";
+  if (sendChatUsersList) sendChatUsersList.innerHTML = `<p class="muted-text">Busque um usuário para enviar.</p>`;
+  if (sendChatUserSearch) sendChatUserSearch.value = "";
 
   sendChatModal.hidden = false;
-  sendChatUserSearch.focus();
+  sendChatUserSearch?.focus();
 }
 
 function closeSendChatModal() {
