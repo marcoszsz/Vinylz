@@ -82,8 +82,9 @@ const suggestionsList = document.getElementById("suggestionsList");
 const nowPlayingBox = document.getElementById("nowPlayingBox");
 const popularReviewsBox = document.getElementById("popularReviewsBox");
 
-const openChatWidgetBtn = document.getElementById("openChatWidgetBtn");
+const openMessagesBtn = document.getElementById("openMessagesBtn");
 const closeChatWidgetBtn = document.getElementById("closeChatWidgetBtn");
+const closeChatWidgetBackdrop = document.getElementById("closeChatWidgetBackdrop");
 const chatWidget = document.getElementById("chatWidget");
 const chatWidgetList = document.getElementById("chatWidgetList");
 const chatSearchInput = document.getElementById("chatSearchInput");
@@ -122,6 +123,8 @@ let currentNotificationFilter = "all";
 let storiesCache = [];
 let activeStoryIndex = 0;
 let storyTimer = null;
+let unsubscribeFeed = null;
+let unsubscribeNotifications = null;
 
 const fallbackAvatar = "https://placehold.co/300x300/111111/ff4d6d?text=V";
 const fallbackCover = "https://placehold.co/300x300/111111/ff4d6d?text=♪";
@@ -308,21 +311,10 @@ function setAttachedMusic(item) {
 function removeAttachedMusic() {
   attachedMusic = null;
 
-  if (attachedMusicPreview) {
-    attachedMusicPreview.hidden = true;
-  }
-
-  if (attachedMusicImage) {
-    attachedMusicImage.src = fallbackCover;
-  }
-
-  if (attachedMusicTitle) {
-    attachedMusicTitle.textContent = "";
-  }
-
-  if (attachedMusicSubtitle) {
-    attachedMusicSubtitle.textContent = "";
-  }
+  if (attachedMusicPreview) attachedMusicPreview.hidden = true;
+  if (attachedMusicImage) attachedMusicImage.src = fallbackCover;
+  if (attachedMusicTitle) attachedMusicTitle.textContent = "";
+  if (attachedMusicSubtitle) attachedMusicSubtitle.textContent = "";
 }
 
 function renderMusicResults(items) {
@@ -581,8 +573,12 @@ postForm?.addEventListener("submit", async (event) => {
 function listenFeed() {
   if (!feedContainer) return;
 
-  let postsQuery;
+  if (unsubscribeFeed) {
+    unsubscribeFeed();
+    unsubscribeFeed = null;
+  }
 
+  let postsQuery;
   const filter = feedFilter?.value || "recent";
 
   try {
@@ -600,7 +596,7 @@ function listenFeed() {
       );
     }
 
-    onSnapshot(postsQuery, (snapshot) => {
+    unsubscribeFeed = onSnapshot(postsQuery, (snapshot) => {
       const posts = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...docSnap.data()
@@ -992,22 +988,6 @@ document.querySelectorAll("[data-story-reaction]").forEach((button) => {
   });
 });
 
-document.addEventListener("keydown", (event) => {
-  if (storyViewerModal?.hidden) return;
-
-  if (event.key === "Escape") {
-    closeStoryViewer();
-  }
-
-  if (event.key === "ArrowRight") {
-    nextStory();
-  }
-
-  if (event.key === "ArrowLeft") {
-    prevStory();
-  }
-});
-
 /* NOTIFICATIONS */
 
 function openNotifications() {
@@ -1043,6 +1023,11 @@ document.querySelectorAll(".notifications-tabs button").forEach((button) => {
 function listenNotifications() {
   if (!currentUser) return;
 
+  if (unsubscribeNotifications) {
+    unsubscribeNotifications();
+    unsubscribeNotifications = null;
+  }
+
   let notificationsQuery;
 
   try {
@@ -1071,7 +1056,7 @@ function listenNotifications() {
       );
     }
 
-    onSnapshot(notificationsQuery, (snapshot) => {
+    unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
       const notifications = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...docSnap.data()
@@ -1251,19 +1236,27 @@ function loadPopularReviews() {
   `;
 }
 
-/* CHAT */
+/* CHAT / MENSAGENS */
 
-openChatWidgetBtn?.addEventListener("click", () => {
-  if (chatWidget) {
-    chatWidget.hidden = false;
-  }
-});
+function openChatWidget() {
+  if (!chatWidget) return;
 
-closeChatWidgetBtn?.addEventListener("click", () => {
-  if (chatWidget) {
-    chatWidget.hidden = true;
-  }
-});
+  chatWidget.hidden = false;
+
+  setTimeout(() => {
+    chatSearchInput?.focus();
+  }, 120);
+}
+
+function closeChatWidget() {
+  if (!chatWidget) return;
+
+  chatWidget.hidden = true;
+}
+
+openMessagesBtn?.addEventListener("click", openChatWidget);
+closeChatWidgetBtn?.addEventListener("click", closeChatWidget);
+closeChatWidgetBackdrop?.addEventListener("click", closeChatWidget);
 
 chatSearchInput?.addEventListener("input", () => {
   loadChatWidget(chatSearchInput.value.trim());
@@ -1319,6 +1312,42 @@ async function loadChatWidget(searchTerm = "") {
     `;
   }
 }
+
+/* GLOBAL KEYBOARD */
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    if (chatWidget && !chatWidget.hidden) {
+      closeChatWidget();
+    }
+
+    if (storyViewerModal && !storyViewerModal.hidden) {
+      closeStoryViewer();
+    }
+
+    if (notificationsModal && !notificationsModal.hidden) {
+      closeNotifications();
+    }
+
+    if (musicPickerModal && !musicPickerModal.hidden) {
+      closeMusicPicker();
+    }
+
+    if (storyModal && !storyModal.hidden) {
+      closeStoryModal();
+    }
+  }
+
+  if (storyViewerModal && !storyViewerModal.hidden) {
+    if (event.key === "ArrowRight") {
+      nextStory();
+    }
+
+    if (event.key === "ArrowLeft") {
+      prevStory();
+    }
+  }
+});
 
 /* IMAGE BUTTON */
 
