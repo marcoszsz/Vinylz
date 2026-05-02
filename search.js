@@ -8,19 +8,16 @@ import {
 import {
   collection,
   query,
-  where,
   getDocs,
   getDoc,
   doc,
   addDoc,
   limit,
+  orderBy,
+  increment,
   serverTimestamp,
   setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-/* =========================
-   ELEMENTOS
-========================= */
 
 const logoutBtn = document.getElementById("logoutBtn");
 const mobileMenuBtn = document.getElementById("mobileMenuBtn");
@@ -77,15 +74,30 @@ const DEFAULT_AVATAR = "https://placehold.co/120x120/111111/ff4d6d?text=V";
 const DEFAULT_COVER = "https://placehold.co/600x600/111111/ff4d6d?text=VINYL";
 const RECENT_KEY = "vinyl_recent_searches";
 
+const FALLBACK_TRENDING = [
+  { term: "SZA", type: "artist", label: "SZA", subtitle: "R&B" },
+  { term: "Frank Ocean", type: "artist", label: "Frank Ocean", subtitle: "R&B" },
+  { term: "Kendrick Lamar", type: "artist", label: "Kendrick Lamar", subtitle: "Hip Hop" },
+  { term: "Taylor Swift", type: "artist", label: "Taylor Swift", subtitle: "Pop" },
+  { term: "Tyler, The Creator", type: "artist", label: "Tyler, The Creator", subtitle: "Hip Hop" },
+  { term: "The Weeknd", type: "artist", label: "The Weeknd", subtitle: "Pop" },
+  { term: "Guns N' Roses", type: "artist", label: "Guns N' Roses", subtitle: "Rock" },
+  { term: "BTS", type: "artist", label: "BTS", subtitle: "K-Pop" },
+  { term: "TWICE", type: "artist", label: "TWICE", subtitle: "K-Pop" },
+  { term: "Billie Eilish", type: "artist", label: "Billie Eilish", subtitle: "Pop" },
+  { term: "Ariana Grande", type: "artist", label: "Ariana Grande", subtitle: "Pop" },
+  { term: "Bad Bunny", type: "artist", label: "Bad Bunny", subtitle: "Latin" },
+  { term: "Travis Scott", type: "artist", label: "Travis Scott", subtitle: "Hip Hop" },
+  { term: "Lana Del Rey", type: "artist", label: "Lana Del Rey", subtitle: "Alternative" },
+  { term: "Michael Jackson", type: "artist", label: "Michael Jackson", subtitle: "Pop" },
+  { term: "Bruno Mars", type: "artist", label: "Bruno Mars", subtitle: "Pop" }
+];
+
 let currentUser = null;
 let currentUserData = null;
 let activeType = "all";
-let currentResults = [];
 let selectedItem = null;
-
-/* =========================
-   AUTH
-========================= */
+let currentTrendingTerms = shuffleArray([...FALLBACK_TRENDING]).slice(0, 8);
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -97,16 +109,20 @@ onAuthStateChanged(auth, async (user) => {
 
   await loadNavbarUser();
   renderRecentSearches();
-});
+  await loadVinylCharts();
 
-/* =========================
-   NAVBAR
-========================= */
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get("q");
+
+  if (q) {
+    searchInput.value = q;
+    performSearch(q, false);
+  }
+});
 
 async function loadNavbarUser() {
   try {
     const userSnap = await getDoc(doc(db, "users", currentUser.uid));
-
     currentUserData = userSnap.exists() ? userSnap.data() : {};
 
     const name =
@@ -117,6 +133,7 @@ async function loadNavbarUser() {
 
     const avatar =
       currentUserData.photoURL ||
+      currentUserData.avatar ||
       currentUser.photoURL ||
       DEFAULT_AVATAR;
 
@@ -137,19 +154,15 @@ logoutBtn?.addEventListener("click", async () => {
   try {
     await signOut(auth);
     window.location.href = "login.html";
-  } catch (error) {
-    console.error(error);
+  } catch {
     showToast("Erro ao sair.");
   }
 });
 
 mobileMenuBtn?.addEventListener("click", () => {
   navbarLinks?.classList.toggle("show");
+  navbarLinks?.classList.toggle("open");
 });
-
-/* =========================
-   EVENTS
-========================= */
 
 searchForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -166,20 +179,14 @@ searchForm?.addEventListener("submit", async (event) => {
 
 clearSearchBtn?.addEventListener("click", () => {
   searchInput.value = "";
-  currentResults = [];
 
   if (resultsGrid) {
     resultsGrid.innerHTML = "";
     resultsGrid.hidden = true;
   }
 
-  if (emptySearchState) {
-    emptySearchState.hidden = false;
-  }
-
-  if (resultsSubtitle) {
-    resultsSubtitle.textContent = "Pesquise algo para começar.";
-  }
+  if (emptySearchState) emptySearchState.hidden = false;
+  if (resultsSubtitle) resultsSubtitle.textContent = "Pesquise algo para começar.";
 });
 
 searchTabs?.addEventListener("click", async (event) => {
@@ -191,7 +198,6 @@ searchTabs?.addEventListener("click", async (event) => {
   });
 
   button.classList.add("active");
-
   activeType = button.dataset.type || "all";
 
   const term = searchInput.value.trim();
@@ -238,22 +244,150 @@ trendingList?.addEventListener("click", async (event) => {
   const term = button.dataset.query;
 
   searchInput.value = term;
-  await performSearch(term);
+  await performSearch(term, false);
 });
 
 exploreTrendingBtn?.addEventListener("click", () => {
-  searchInput.value = "The Weeknd";
-  performSearch("The Weeknd");
+  const term = getFirstTrendingTerm();
+
+  searchInput.value = term;
+  performSearch(term, false);
 });
 
 emptyExploreBtn?.addEventListener("click", () => {
-  searchInput.value = "The Weeknd";
-  performSearch("The Weeknd");
+  const term = getFirstTrendingTerm();
+
+  searchInput.value = term;
+  performSearch(term, false);
 });
 
-/* =========================
-   SEARCH CORE
-========================= */
+async function loadVinylCharts() {
+  try {
+    if (!trendingList) return;
+
+    trendingList.innerHTML = `<p class="muted-text">Carregando em alta...</p>`;
+
+    const statsQuery = query(
+      collection(db, "searchStats"),
+      orderBy("count", "desc"),
+      limit(8)
+    );
+
+    const snap = await getDocs(statsQuery);
+
+    const realCharts = snap.docs
+      .map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }))
+      .filter((item) => item.term)
+      .map((item) => ({
+        term: item.term,
+        type: item.type || "all",
+        label: item.term,
+        subtitle: `${item.count || 0} buscas`
+      }));
+
+    currentTrendingTerms = mergeTrendingWithFallback(realCharts, FALLBACK_TRENDING, 8);
+
+    renderTrendingItems(currentTrendingTerms, realCharts.length === 0);
+  } catch (error) {
+    console.warn("Não foi possível carregar searchStats:", error);
+
+    currentTrendingTerms = shuffleArray([...FALLBACK_TRENDING]).slice(0, 8);
+    renderTrendingItems(currentTrendingTerms, true);
+  }
+}
+
+function mergeTrendingWithFallback(realCharts, fallbackItems, maxItems = 8) {
+  const seen = new Set();
+  const merged = [];
+
+  [...realCharts, ...shuffleArray([...fallbackItems])].forEach((item) => {
+    const key = normalizeText(item.term || item.label);
+    if (!key || seen.has(key)) return;
+
+    seen.add(key);
+    merged.push(item);
+  });
+
+  return merged.slice(0, maxItems);
+}
+
+function renderTrendingItems(items, isFallback = false) {
+  if (!trendingList) return;
+
+  if (!items.length) {
+    trendingList.innerHTML = `<p class="muted-text">Nenhuma busca em alta ainda.</p>`;
+    return;
+  }
+
+  trendingList.innerHTML = items.map((item, index) => {
+    const icon = getTrendingIcon(item.type, index);
+
+    return `
+      <button
+        type="button"
+        class="trending-item"
+        data-query="${escapeHTML(item.term)}"
+        title="${escapeHTML(item.term)}"
+      >
+        <span class="trending-icon">${icon}</span>
+
+        <span class="trending-text">
+          <strong>${escapeHTML(item.label || item.term)}</strong>
+          <small>${escapeHTML(isFallback ? "Sugestão popular" : item.subtitle || "Em alta no Vinyl")}</small>
+        </span>
+      </button>
+    `;
+  }).join("");
+}
+
+function getTrendingIcon(type, index = 0) {
+  const icons = {
+    track: "🎵",
+    album: "💿",
+    artist: "🔥",
+    playlist: "📀",
+    user: "👤",
+    users: "👤",
+    all: "🔎"
+  };
+
+  return icons[type] || ["🔥", "🎧", "💿", "📈", "⭐"][index % 5];
+}
+
+function getFirstTrendingTerm() {
+  const list = currentTrendingTerms?.length
+    ? currentTrendingTerms
+    : FALLBACK_TRENDING;
+
+  const randomItem = list[Math.floor(Math.random() * list.length)];
+
+  return randomItem?.term || "SZA";
+}
+
+async function saveSearchStat(term, type = "all") {
+  if (!term?.trim()) return;
+
+  const cleanTerm = term.trim();
+  const statId = normalizeStatId(cleanTerm);
+
+  try {
+    await setDoc(doc(db, "searchStats", statId), {
+      term: cleanTerm,
+      termLower: cleanTerm.toLowerCase(),
+      type: type || "all",
+      count: increment(1),
+      updatedAt: serverTimestamp(),
+      lastUserId: currentUser?.uid || null
+    }, { merge: true });
+
+    await loadVinylCharts();
+  } catch (error) {
+    console.warn("Não foi possível salvar estatística de busca:", error);
+  }
+}
 
 async function performSearch(term, saveRecent = true) {
   try {
@@ -262,6 +396,7 @@ async function performSearch(term, saveRecent = true) {
     if (saveRecent) {
       saveRecentSearch(term);
       renderRecentSearches();
+      await saveSearchStat(term, activeType);
     }
 
     const [musicResults, userResults] = await Promise.all([
@@ -278,8 +413,6 @@ async function performSearch(term, saveRecent = true) {
     } else {
       results = musicResults.filter((item) => item.type === activeType);
     }
-
-    currentResults = results;
 
     renderResults(results, term);
   } catch (error) {
@@ -304,19 +437,11 @@ async function searchMusic(term) {
 
   const spotifyResults = await searchSpotifyAPI(term, types);
 
-  if (spotifyResults.length) {
-    return spotifyResults;
-  }
+  if (spotifyResults.length) return spotifyResults;
 
   return searchITunesFallback(term, types);
 }
 
-/*
-  API opcional:
-  /api/spotifySearch?q=...&type=track,album,artist,playlist
-
-  Se não existir, usa iTunes fallback.
-*/
 async function searchSpotifyAPI(term, types) {
   try {
     const response = await fetch(
@@ -384,6 +509,8 @@ function normalizeSpotifyResults(data) {
   });
 
   playlists.forEach((item) => {
+    if (!item) return;
+
     results.push({
       id: item.id || crypto.randomUUID(),
       source: "spotify",
@@ -400,26 +527,13 @@ function normalizeSpotifyResults(data) {
   return results;
 }
 
-/**
- * Busca no iTunes com suporte a múltiplos tipos
- * @async
- * @param {string} term - Termo de busca
- * @param {Array<string>} types - Tipos a buscar (track, album, artist, playlist)
- * @returns {Promise<Array>} Resultados normalizados
- */
 async function searchITunesFallback(term, types) {
   if (!term?.trim()) return [];
 
   try {
     const entities = getITunesEntities(types);
-    
-    if (!entities.length) return [];
-
-    // Fazer requisições paralelas para cada tipo
-    const requests = entities.map(entity =>
-      fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=${entity}&limit=20`
-      )
+    const requests = entities.map((entity) =>
+      fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=${entity}&limit=20`)
     );
 
     const responses = await Promise.all(requests);
@@ -436,23 +550,16 @@ async function searchITunesFallback(term, types) {
       results.push(...items);
     }
 
-    // Filtrar por tipo ativo se necessário
     if (activeType !== "all") {
       return results.filter((item) => item.type === activeType);
     }
 
     return results;
-  } catch (error) {
-    console.error("Fallback iTunes falhou:", error);
+  } catch {
     return [];
   }
 }
 
-/**
- * Retorna array de entidades iTunes baseado nos tipos solicitados
- * @param {Array<string>} types - Tipos (track, album, artist, playlist)
- * @returns {Array<string>} Entidades iTunes
- */
 function getITunesEntities(types) {
   const entities = [];
 
@@ -460,9 +567,7 @@ function getITunesEntities(types) {
   if (types.includes("album")) entities.push("album");
   if (types.includes("artist")) entities.push("musicArtist");
 
-  // playlist não existe no iTunes, então ignoramos
-
-  return entities.length > 0 ? entities : ["song"];
+  return entities.length ? entities : ["song"];
 }
 
 function normalizeITunesSearchItem(item) {
@@ -473,7 +578,6 @@ function normalizeITunesSearchItem(item) {
       : "track";
 
   const id = String(item.trackId || item.collectionId || item.artistId || "");
-
   if (!id) return null;
 
   return {
@@ -494,8 +598,7 @@ async function searchUsers(term) {
   const users = [];
 
   try {
-    const usersRef = collection(db, "users");
-    const snap = await getDocs(query(usersRef, limit(80)));
+    const snap = await getDocs(query(collection(db, "users"), limit(80)));
 
     snap.forEach((docSnap) => {
       if (docSnap.id === currentUser?.uid) return;
@@ -504,7 +607,6 @@ async function searchUsers(term) {
 
       const displayName = data.displayName || data.name || "";
       const username = data.username || "";
-
       const haystack = normalizeText(`${displayName} ${username}`);
 
       if (!haystack.includes(normalized)) return;
@@ -517,7 +619,7 @@ async function searchUsers(term) {
         subtitle: username ? `@${username}` : "@usuario",
         description: data.bio || "Perfil musical no Vinyl",
         image: data.photoURL || data.avatar || DEFAULT_AVATAR,
-        url: `profile.html?uid=${encodeURIComponent(docSnap.id)}`,
+        url: `public-profile.html?uid=${encodeURIComponent(docSnap.id)}`,
         raw: {
           uid: docSnap.id,
           ...data
@@ -526,15 +628,10 @@ async function searchUsers(term) {
     });
 
     return users.slice(0, 12);
-  } catch (error) {
-    console.error("Erro ao buscar usuários:", error);
+  } catch {
     return [];
   }
 }
-
-/* =========================
-   RENDER RESULTS
-========================= */
 
 function renderResults(results, term) {
   if (!resultsGrid || !emptySearchState) return;
@@ -557,8 +654,10 @@ function renderResults(results, term) {
     `;
 
     document.getElementById("emptyExploreBtnDynamic")?.addEventListener("click", () => {
-      searchInput.value = "The Weeknd";
-      performSearch("The Weeknd");
+      const trendingTerm = getFirstTrendingTerm();
+
+      searchInput.value = trendingTerm;
+      performSearch(trendingTerm, false);
     });
 
     return;
@@ -610,9 +709,7 @@ function createResultCard(item) {
     <div class="result-actions">
       ${
         item.type === "user"
-          ? `
-            <a href="${escapeHTML(item.url)}" class="card-action primary">Ver perfil</a>
-          `
+          ? `<a href="${escapeHTML(item.url)}" class="card-action primary">Ver perfil</a>`
           : `
             <a href="${escapeHTML(getDetailsUrl(item))}" class="card-action primary">Detalhes</a>
             <button type="button" class="card-action" data-action="favorite">Favoritar</button>
@@ -624,7 +721,6 @@ function createResultCard(item) {
   `;
 
   const img = card.querySelector("img");
-
   img.addEventListener("error", () => {
     img.src = item.type === "user" ? DEFAULT_AVATAR : DEFAULT_COVER;
   });
@@ -653,10 +749,6 @@ function createResultCard(item) {
   return card;
 }
 
-/* =========================
-   DETAILS URL
-========================= */
-
 function getDetailsUrl(item) {
   const source = item.source || detectItemSource(item.id);
 
@@ -667,16 +759,16 @@ function detectItemSource(id) {
   return /^\d+$/.test(String(id || "")) ? "itunes" : "spotify";
 }
 
-/* =========================
-   ITEM MODAL
-========================= */
-
 function openItemModal(item) {
   selectedItem = item;
 
   if (!itemModal) return;
 
   modalItemCover.src = item.image || DEFAULT_COVER;
+  modalItemCover.onerror = () => {
+    modalItemCover.src = DEFAULT_COVER;
+  };
+
   modalItemType.textContent = getTypeLabel(item.type);
   modalItemTitle.textContent = item.title;
   modalItemSubtitle.textContent = item.subtitle || "";
@@ -697,23 +789,16 @@ closeItemModalBtn?.addEventListener("click", closeItemModal);
 closeItemModalBackdrop?.addEventListener("click", closeItemModal);
 
 modalFavoriteBtn?.addEventListener("click", () => {
-  if (!selectedItem) return;
-  favoriteItem(selectedItem);
+  if (selectedItem) favoriteItem(selectedItem);
 });
 
 modalReviewBtn?.addEventListener("click", () => {
-  if (!selectedItem) return;
-  openReviewForItem(selectedItem);
+  if (selectedItem) openReviewForItem(selectedItem);
 });
 
 modalSendChatBtn?.addEventListener("click", () => {
-  if (!selectedItem) return;
-  openSendChatModal(selectedItem);
+  if (selectedItem) openSendChatModal(selectedItem);
 });
-
-/* =========================
-   FAVORITE / REVIEW
-========================= */
 
 async function favoriteItem(item) {
   if (!currentUser || !item) return;
@@ -734,24 +819,19 @@ async function favoriteItem(item) {
     }, { merge: true });
 
     showToast("Adicionado aos favoritos.");
-  } catch (error) {
-    console.error("Erro ao favoritar:", error);
+  } catch {
     showToast("Não foi possível favoritar.");
   }
 }
 
 function openReviewForItem(item) {
-  const query = encodeURIComponent(item.title);
+  const queryText = encodeURIComponent(item.title);
   const id = encodeURIComponent(item.id);
   const type = encodeURIComponent(item.type);
   const source = encodeURIComponent(item.source || detectItemSource(item.id));
 
-  window.location.href = `timeline.html?review=${query}&itemId=${id}&type=${type}&source=${source}`;
+  window.location.href = `timeline.html?review=${queryText}&itemId=${id}&type=${type}&source=${source}`;
 }
-
-/* =========================
-   SEND TO CHAT
-========================= */
 
 function openSendChatModal(item) {
   selectedItem = item;
@@ -759,6 +839,10 @@ function openSendChatModal(item) {
   if (!sendChatModal) return;
 
   sendChatPreviewImage.src = item.image || DEFAULT_COVER;
+  sendChatPreviewImage.onerror = () => {
+    sendChatPreviewImage.src = DEFAULT_COVER;
+  };
+
   sendChatPreviewTitle.textContent = item.title;
   sendChatPreviewSubtitle.textContent = item.subtitle || getTypeLabel(item.type);
 
@@ -813,6 +897,10 @@ function renderSendChatUsers(users) {
       <small>Enviar</small>
     `;
 
+    button.querySelector("img").addEventListener("error", (event) => {
+      event.currentTarget.src = DEFAULT_AVATAR;
+    });
+
     button.addEventListener("click", () => {
       sendItemToUser(user);
     });
@@ -863,15 +951,10 @@ async function sendItemToUser(user) {
 
     closeSendChatModal();
     showToast("Enviado no chat.");
-  } catch (error) {
-    console.error("Erro ao enviar no chat:", error);
+  } catch {
     showToast("Erro ao enviar no chat.");
   }
 }
-
-/* =========================
-   RECENT SEARCHES
-========================= */
 
 function getRecentSearches() {
   try {
@@ -883,7 +966,6 @@ function getRecentSearches() {
 
 function saveRecentSearch(term) {
   const clean = term.trim();
-
   if (!clean) return;
 
   const recent = getRecentSearches()
@@ -898,7 +980,6 @@ function renderRecentSearches() {
   if (!recentSearchesList) return;
 
   const recent = getRecentSearches();
-
   recentSearchesList.innerHTML = "";
 
   if (!recent.length) {
@@ -925,9 +1006,12 @@ clearRecentSearchesBtn?.addEventListener("click", () => {
   renderRecentSearches();
 });
 
-/* =========================
-   UTILS
-========================= */
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+
+  if (itemModal && !itemModal.hidden) closeItemModal();
+  if (sendChatModal && !sendChatModal.hidden) closeSendChatModal();
+});
 
 function setLoading(isLoading) {
   if (searchBtn) searchBtn.disabled = isLoading;
@@ -963,6 +1047,13 @@ function normalizeText(value) {
     .trim()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+}
+
+function normalizeStatId(term) {
+  return normalizeText(term)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || crypto.randomUUID();
 }
 
 function upgradeITunesImage(url) {
@@ -1003,6 +1094,13 @@ function debounce(fn, delay = 300) {
       fn(...args);
     }, delay);
   };
+}
+
+function shuffleArray(array) {
+  return array
+    .map((item) => ({ item, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ item }) => item);
 }
 
 function showToast(message) {

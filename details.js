@@ -8,86 +8,85 @@ import {
 import {
   doc,
   getDoc,
-  getDocs,
   setDoc,
   addDoc,
   collection,
+  getDocs,
+  query,
+  limit,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* =========================
-   ELEMENTOS DO DOM
-========================= */
-
-/**
- * Elementos de navegação e autenticação
- */
+const navbarLinks = document.getElementById("navbarLinks");
+const mobileMenuBtn = document.getElementById("mobileMenuBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const navbarAvatar = document.getElementById("navbarAvatar");
 const navbarUsername = document.getElementById("navbarUsername");
 
-const detailsLoading = document.getElementById("detailsLoading");
-const detailsError = document.getElementById("detailsError");
-const detailsContent = document.getElementById("detailsContent");
+const loadingState = document.getElementById("loadingState");
+const detailsHero = document.getElementById("detailsHero");
+const emptyState = document.getElementById("emptyState");
+const insightsGrid = document.getElementById("insightsGrid");
 
-const detailsImage = document.getElementById("detailsImage");
-const detailsType = document.getElementById("detailsType");
-const detailsTitle = document.getElementById("detailsTitle");
-const artistBiography = document.getElementById("artistBiography");
-const detailsMeta = document.getElementById("detailsMeta");
-const topTracks = document.getElementById("topTracks");
-const discography = document.getElementById("discography");
-const relatedArtists = document.getElementById("relatedArtists");
-const publicReviews = document.getElementById("publicReviews");
+const heroBg = document.getElementById("heroBg");
+const itemCover = document.getElementById("itemCover");
+const sourcePill = document.getElementById("sourcePill");
+const itemType = document.getElementById("itemType");
+const itemSource = document.getElementById("itemSource");
+const itemTitle = document.getElementById("itemTitle");
+const itemSubtitle = document.getElementById("itemSubtitle");
+const itemDescription = document.getElementById("itemDescription");
 
-const favoriteDetailBtn = document.getElementById("favoriteDetailBtn");
-const hideArtistBtn = document.getElementById("hideArtistBtn");
-const reviewLink = document.getElementById("reviewLink");
-const spotifyLink = document.getElementById("spotifyLink");
+const metaSource = document.getElementById("metaSource");
+const metaGenre = document.getElementById("metaGenre");
+const metaRelease = document.getElementById("metaRelease");
+const metaPopularity = document.getElementById("metaPopularity");
+const insightMood = document.getElementById("insightMood");
 
+const favoriteBtn = document.getElementById("favoriteBtn");
+const reviewBtn = document.getElementById("reviewBtn");
+const openExternalBtn = document.getElementById("openExternalBtn");
+const sendChatBtn = document.getElementById("sendChatBtn");
+const shareBtn = document.getElementById("shareBtn");
+const copyLinkBtn = document.getElementById("copyLinkBtn");
 
+const relatedSection = document.getElementById("relatedSection");
+const relatedTitle = document.getElementById("relatedTitle");
+const relatedSubtitle = document.getElementById("relatedSubtitle");
+const relatedGrid = document.getElementById("relatedGrid");
+
+const reviewModal = document.getElementById("reviewModal");
+const closeReviewBackdrop = document.getElementById("closeReviewBackdrop");
+const closeReviewBtn = document.getElementById("closeReviewBtn");
+const reviewPreviewImage = document.getElementById("reviewPreviewImage");
+const reviewPreviewTitle = document.getElementById("reviewPreviewTitle");
+const reviewPreviewSubtitle = document.getElementById("reviewPreviewSubtitle");
+const reviewForm = document.getElementById("reviewForm");
+const ratingInput = document.getElementById("ratingInput");
+const reviewText = document.getElementById("reviewText");
 
 const sendChatModal = document.getElementById("sendChatModal");
-const closeSendChatBtn = document.getElementById("closeSendChatBtn");
 const closeSendChatBackdrop = document.getElementById("closeSendChatBackdrop");
-const sendChatPreviewImage = document.getElementById("sendChatPreviewImage");
-const sendChatPreviewTitle = document.getElementById("sendChatPreviewTitle");
-const sendChatPreviewSubtitle = document.getElementById("sendChatPreviewSubtitle");
-const sendChatUserSearch = document.getElementById("sendChatUserSearch");
-const sendChatUsersList = document.getElementById("sendChatUsersList");
+const closeSendChatBtn = document.getElementById("closeSendChatBtn");
+const sendPreviewImage = document.getElementById("sendPreviewImage");
+const sendPreviewTitle = document.getElementById("sendPreviewTitle");
+const sendPreviewSubtitle = document.getElementById("sendPreviewSubtitle");
+const sendUserSearch = document.getElementById("sendUserSearch");
+const sendUsersList = document.getElementById("sendUsersList");
 
 const toast = document.getElementById("toast");
 
-/**
- * Constantes de configuração
- */
 const DEFAULT_AVATAR = "https://placehold.co/120x120/111111/ff4d6d?text=V";
 const DEFAULT_COVER = "https://placehold.co/800x800/111111/ff4d6d?text=VINYL";
-const DEBOUNCE_DELAY = 350;
-const MAX_SEARCH_RESULTS = 12;
-const TOAST_DURATION = 2600;
 
-/**
- * Estado da aplicação
- */
 let currentUser = null;
 let currentUserData = null;
 let currentItem = null;
-let userSearchCache = new Map();
-
-/* =========================
-   PARAMS
-========================= */
 
 const params = new URLSearchParams(window.location.search);
-
-const itemType = params.get("type");
 const itemId = params.get("id");
-const itemSource = (params.get("source") || detectSource(itemId)).toLowerCase();
-
-/* =========================
-   AUTH
-========================= */
+const itemTypeParam = params.get("type") || "track";
+const itemSourceParam = params.get("source") || "spotify";
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -101,27 +100,21 @@ onAuthStateChanged(auth, async (user) => {
   await loadDetails();
 });
 
+mobileMenuBtn?.addEventListener("click", () => {
+  navbarLinks?.classList.toggle("open");
+  navbarLinks?.classList.toggle("show");
+});
+
 logoutBtn?.addEventListener("click", async () => {
   try {
     await signOut(auth);
     window.location.href = "login.html";
-  } catch (error) {
-    console.error(error);
+  } catch {
     showToast("Erro ao sair.");
   }
 });
 
-/* =========================
-   NAVBAR
-========================= */
-
-/**
- * Carrega dados do usuário para a barra de navegação
- * @async
- */
 async function loadNavbarUser() {
-  if (!currentUser?.uid) return;
-
   try {
     const snap = await getDoc(doc(db, "users", currentUser.uid));
 
@@ -135,652 +128,463 @@ async function loadNavbarUser() {
 
     const avatar =
       currentUserData.photoURL ||
+      currentUserData.avatar ||
       currentUser.photoURL ||
       DEFAULT_AVATAR;
 
-    if (navbarUsername) navbarUsername.textContent = name;
-
-    if (navbarAvatar) {
-      navbarAvatar.src = avatar;
-      navbarAvatar.onerror = () => {
-        navbarAvatar.src = DEFAULT_AVATAR;
-      };
-    }
-  } catch (error) {
-    console.error("Erro ao carregar navbar:", error);
+    navbarUsername.textContent = name;
+    navbarAvatar.src = avatar;
+    navbarAvatar.onerror = () => {
+      navbarAvatar.src = DEFAULT_AVATAR;
+    };
+  } catch {
+    navbarAvatar.src = DEFAULT_AVATAR;
   }
 }
 
-/* =========================
-   CARREGAMENTO DE DETALHES
-========================= */
-
-/**
- * Carrega detalhes do item (artista, álbum, música ou playlist)
- * @async
- */
 async function loadDetails() {
-  if (!itemType || !itemId) {
-    console.error("loadDetails: itemType ou itemId inválidos", { itemType, itemId });
-    renderError("Detalhes inválidos.");
+  if (!itemId) {
+    showEmpty();
     return;
   }
 
-  console.log("loadDetails: Iniciando carregamento", { itemType, itemId, itemSource });
+  showLoading(true);
 
   try {
-    setLoading(true);
+    let item = null;
 
-    let data = null;
-
-    if (itemSource === "spotify") {
-      console.log("loadDetails: Buscando no Spotify");
-      data = await fetchSpotifyDetails(itemType, itemId);
+    if (itemSourceParam === "itunes") {
+      item = await fetchITunesDetails(itemId, itemTypeParam);
     } else {
-      console.log("loadDetails: Buscando no iTunes");
-      data = await fetchITunesDetails(itemType, itemId);
+      item = await fetchSpotifyDetails(itemId, itemTypeParam);
     }
 
-    if (!data) {
-      console.error("loadDetails: Dados não encontrados");
-      throw new Error("Detalhes não encontrados.");
+    if (!item) {
+      item = await getCachedMusicItem();
     }
 
-    console.log("loadDetails: Dados carregados com sucesso", data);
+    if (!item) {
+      showEmpty();
+      return;
+    }
 
-    currentItem = data;
+    currentItem = item;
 
-    renderDetails(data);
+    renderDetails(item);
+    await checkFavoriteState();
+    await loadRelated(item);
   } catch (error) {
-    console.error("loadDetails: Erro ao carregar detalhes", error);
-    renderError("Erro ao carregar detalhes.");
+    console.error("Erro ao carregar detalhes:", error);
+    showEmpty();
   } finally {
-    setLoading(false);
+    showLoading(false);
   }
 }
 
-function detectSource(id) {
-  const value = String(id || "");
-
-  if (/^\d+$/.test(value)) {
-    return "itunes";
-  }
-
-  return "spotify";
-}
-
-/**
- * Busca detalhes no Spotify
- * @async
- * @param {string} type - Tipo do item (track, album, artist, playlist)
- * @param {string} id - ID do item no Spotify
- * @returns {Promise<Object>} Dados normalizados do item
- */
-async function fetchSpotifyDetails(type, id) {
-  if (!type || !id) throw new Error("Tipo ou ID inválido.");
-
+async function fetchSpotifyDetails(id, type) {
   try {
-    const response = await fetch(
-      `/api/spotifyDetails?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`
-    );
+    const response = await fetch(`/api/spotifyDetails?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`);
 
-    if (!response.ok) {
-      throw new Error("Erro ao buscar detalhes no Spotify.");
-    }
+    if (!response.ok) return null;
 
     const data = await response.json();
-    return normalizeSpotifyDetails(data, type, id);
-  } catch (error) {
-    console.error("Erro ao buscar Spotify:", error);
-    throw error;
+
+    return normalizeSpotifyItem(data, type);
+  } catch {
+    return null;
   }
 }
 
-/**
- * Busca detalhes no iTunes/Apple Music
- * @async
- * @param {string} type - Tipo do item
- * @param {string} id - ID do item no iTunes
- * @returns {Promise<Object|null>} Dados normalizados do item
- */
-async function fetchITunesDetails(type, id) {
-  if (!id) throw new Error("ID inválido.");
-
-  console.log("fetchITunesDetails: Iniciando busca", { type, id });
-
+async function fetchITunesDetails(id, type) {
   try {
-    const response = await fetch(
-      `https://itunes.apple.com/lookup?id=${encodeURIComponent(id)}`
-    );
+    const response = await fetch(`https://itunes.apple.com/lookup?id=${encodeURIComponent(id)}&entity=song`);
 
-    if (!response.ok) {
-      throw new Error("Erro ao buscar detalhes no iTunes.");
-    }
+    if (!response.ok) return null;
 
     const data = await response.json();
     const item = data.results?.[0];
 
-    if (!item) {
-      console.error("fetchITunesDetails: Nenhum item encontrado nos resultados", data);
-      return null;
-    }
+    if (!item) return null;
 
-    const normalized = normalizeITunesDetails(item, type);
-    console.log("fetchITunesDetails: Dados normalizados", normalized);
-    return normalized;
-  } catch (error) {
-    console.error("Erro ao buscar iTunes:", error);
-    throw error;
+    return normalizeITunesItem(item, type);
+  } catch {
+    return null;
   }
 }
 
-/* =========================
-   NORMALIZAÇÃO DE DETALHES
-========================= */
+async function getCachedMusicItem() {
+  try {
+    const cacheId = `${itemTypeParam}_${itemSourceParam}_${itemId}`.replaceAll("/", "_");
+    const snap = await getDoc(doc(db, "musicItems", cacheId));
 
-/**
- * Normaliza dados do Spotify para formato padrão
- * @param {Object} data - Dados brutos do Spotify
- * @param {string} type - Tipo do item
- * @param {string} id - ID do item
- * @returns {Object} Objeto normalizado
- */
-function normalizeSpotifyDetails(data, type, id) {
+    if (!snap.exists()) return null;
+
+    return snap.data();
+  } catch {
+    return null;
+  }
+}
+
+function normalizeSpotifyItem(data, type) {
   const item = data.item || data;
+
+  if (!item) return null;
 
   if (type === "track") {
     return {
-      id: item.id || id,
+      id: item.id,
       source: "spotify",
       type: "track",
       title: item.name || "Música",
-      subtitle: item.artists?.map((artist) => artist.name).join(", ") || "Artista",
+      subtitle: item.artists?.map((a) => a.name).join(", ") || "Artista",
       description: item.album?.name ? `Álbum: ${item.album.name}` : "Música no Spotify",
       image: item.album?.images?.[0]?.url || DEFAULT_COVER,
-      url: item.external_urls?.spotify || item.url || "",
+      url: item.external_urls?.spotify || "",
+      genre: item.genres?.[0] || "Música",
       releaseDate: item.album?.release_date || "",
-      genre: "",
-      popularity: item.popularity || null,
-      raw: item
+      popularity: item.popularity ? `${item.popularity}/100` : "—",
+      album: item.album?.name || "",
+      artistName: item.artists?.[0]?.name || ""
     };
   }
 
   if (type === "album") {
     return {
-      id: item.id || id,
+      id: item.id,
       source: "spotify",
       type: "album",
       title: item.name || "Álbum",
-      subtitle: item.artists?.map((artist) => artist.name).join(", ") || "Artista",
+      subtitle: item.artists?.map((a) => a.name).join(", ") || "Artista",
       description: `${item.total_tracks || 0} faixas`,
       image: item.images?.[0]?.url || DEFAULT_COVER,
-      url: item.external_urls?.spotify || item.url || "",
+      url: item.external_urls?.spotify || "",
+      genre: item.genres?.[0] || "Álbum",
       releaseDate: item.release_date || "",
-      genre: item.genres?.join(", ") || "",
-      popularity: item.popularity || null,
-      raw: item
+      popularity: item.popularity ? `${item.popularity}/100` : "—",
+      album: item.name || "",
+      artistName: item.artists?.[0]?.name || ""
     };
   }
 
   if (type === "artist") {
     return {
-      id: item.id || id,
+      id: item.id,
       source: "spotify",
       type: "artist",
       title: item.name || "Artista",
-      subtitle: item.genres?.slice(0, 3).join(", ") || "Artista",
-      description: `${formatNumber(item.followers?.total || 0)} seguidores`,
+      subtitle: item.genres?.slice(0, 2).join(", ") || "Artista",
+      description: `${formatNumber(item.followers?.total || 0)} seguidores no Spotify`,
       image: item.images?.[0]?.url || DEFAULT_COVER,
-      url: item.external_urls?.spotify || item.url || "",
-      releaseDate: "",
-      genre: item.genres?.join(", ") || "",
-      popularity: item.popularity || null,
-      raw: item
+      url: item.external_urls?.spotify || "",
+      genre: item.genres?.[0] || "Artista",
+      releaseDate: "—",
+      popularity: item.popularity ? `${item.popularity}/100` : "—",
+      artistName: item.name || ""
     };
   }
 
-  if (type === "playlist") {
-    return {
-      id: item.id || id,
-      source: "spotify",
-      type: "playlist",
-      title: item.name || "Playlist",
-      subtitle: item.owner?.display_name || "Spotify",
-      description: stripHTML(item.description || "Playlist"),
-      image: item.images?.[0]?.url || DEFAULT_COVER,
-      url: item.external_urls?.spotify || item.url || "",
-      releaseDate: "",
-      genre: "",
-      popularity: null,
-      raw: item
-    };
-  }
-
-  return {
-    id,
-    source: "spotify",
-    type,
-    title: item.name || "Item",
-    subtitle: "Spotify",
-    description: "",
-    image: DEFAULT_COVER,
-    url: item.external_urls?.spotify || "",
-    raw: item
-  };
+  return null;
 }
 
-/**
- * Normaliza dados do iTunes para formato padrão
- * @param {Object} item - Item do iTunes
- * @param {string} typeFromUrl - Tipo passado na URL
- * @returns {Object} Objeto normalizado
- */
-function normalizeITunesDetails(item, typeFromUrl) {
-  if (!item) return null;
-
-  const type = item.wrapperType === "artist"
-    ? "artist"
-    : item.collectionType === "Album"
-      ? "album"
-      : typeFromUrl || "track";
-
-  // Construir descrição melhorada baseado no tipo
-  let description = "";
-  
-  if (type === "track") {
-    const parts = [];
-    if (item.collectionName) parts.push(`Álbum: ${item.collectionName}`);
-    if (item.primaryGenreName) parts.push(`Gênero: ${item.primaryGenreName}`);
-    description = parts.length > 0 ? parts.join(" • ") : "Música no iTunes";
-  } else if (type === "album") {
-    const parts = [];
-    if (item.trackCount) parts.push(`${item.trackCount} faixas`);
-    if (item.primaryGenreName) parts.push(`Gênero: ${item.primaryGenreName}`);
-    description = parts.length > 0 ? parts.join(" • ") : "Álbum no iTunes";
-  } else if (type === "artist") {
-    if (item.primaryGenreName) {
-      description = `Gênero: ${item.primaryGenreName}`;
-    } else {
-      description = "Artista no iTunes";
-    }
-  } else {
-    description = item.primaryGenreName || "Catálogo musical";
-  }
+function normalizeITunesItem(item, forcedType) {
+  const type = forcedType || (
+    item.wrapperType === "artist"
+      ? "artist"
+      : item.collectionType === "Album"
+        ? "album"
+        : "track"
+  );
 
   return {
-    id: String(item.trackId || item.collectionId || item.artistId || ""),
+    id: String(item.trackId || item.collectionId || item.artistId || itemId),
     source: "itunes",
     type,
-    title: item.trackName || item.collectionName || item.artistName || "Sem título",
-    subtitle: item.artistName || "",
-    description: description,
+    title: item.trackName || item.collectionName || item.artistName || "Resultado",
+    subtitle: item.artistName || "Artista",
+    description: [
+      item.collectionName ? `Álbum: ${item.collectionName}` : "",
+      item.primaryGenreName ? `Gênero: ${item.primaryGenreName}` : ""
+    ].filter(Boolean).join(" • ") || "Catálogo musical",
     image: upgradeITunesImage(item.artworkUrl100) || DEFAULT_COVER,
     url: item.trackViewUrl || item.collectionViewUrl || item.artistViewUrl || "",
-    releaseDate: item.releaseDate || "",
-    genre: item.primaryGenreName || "",
-    popularity: null,
-    raw: item
+    genre: item.primaryGenreName || "—",
+    releaseDate: formatReleaseDate(item.releaseDate),
+    popularity: "—",
+    album: item.collectionName || "",
+    artistName: item.artistName || ""
   };
 }
 
-/* =========================
-   RENDERIZAÇÃO
-========================= */
-
-/**
- * Renderiza os detalhes do item na página
- * @param {Object} item - Item a renderizar
- */
 function renderDetails(item) {
-  if (!item) {
-    console.warn("renderDetails: Item é null/undefined");
-    return;
-  }
+  detailsHero.hidden = false;
+  insightsGrid.hidden = false;
 
-  console.log("renderDetails: Renderizando item:", item);
+  const sourceLabel = item.source === "itunes" ? "Apple Music" : "Spotify";
+  const typeLabel = getTypeLabel(item.type);
 
-  if (detailsContent) detailsContent.hidden = false;
-  if (detailsError) detailsError.hidden = true;
+  itemCover.src = item.image || DEFAULT_COVER;
+  itemCover.onerror = () => {
+    itemCover.src = DEFAULT_COVER;
+  };
 
-  // Imagem
-  if (detailsImage) {
-    detailsImage.src = item.image || DEFAULT_COVER;
-    detailsImage.onerror = () => {
-      detailsImage.src = DEFAULT_COVER;
-    };
-  } else {
-    console.warn("renderDetails: Elemento detailsImage não encontrado");
-  }
+  heroBg.style.backgroundImage = `url("${item.image || DEFAULT_COVER}")`;
 
-  // Tipo
-  if (detailsType) {
-    detailsType.textContent = getTypeLabel(item.type);
-  } else {
-    console.warn("renderDetails: Elemento detailsType não encontrado");
-  }
+  sourcePill.textContent = sourceLabel;
+  itemType.textContent = typeLabel;
+  itemSource.textContent = sourceLabel;
+  itemTitle.textContent = item.title;
+  itemSubtitle.textContent = item.subtitle || "";
+  itemDescription.textContent = item.description || "Informações do catálogo musical.";
 
-  // Título
-  if (detailsTitle) {
-    detailsTitle.textContent = item.title || "Sem título";
-  } else {
-    console.warn("renderDetails: Elemento detailsTitle não encontrado");
-  }
+  metaSource.textContent = sourceLabel;
+  metaGenre.textContent = item.genre || "—";
+  metaRelease.textContent = item.releaseDate || "—";
+  metaPopularity.textContent = item.popularity || "—";
 
-  // Biografia/Descrição
-  if (artistBiography) {
-    artistBiography.textContent = item.description || "Sem descrição disponível.";
-  } else {
-    console.warn("renderDetails: Elemento artistBiography não encontrado");
-  }
+  insightMood.textContent = getMoodText(item);
 
-  // Meta informações
-  if (detailsMeta) {
-    detailsMeta.innerHTML = "";
+  openExternalBtn.textContent = item.source === "itunes" ? "Abrir na App Store" : "Abrir no Spotify";
+  openExternalBtn.href = item.url || "#";
+  openExternalBtn.hidden = !item.url;
 
-    const metaItems = [
-      item.source ? `Fonte: ${item.source === "itunes" ? "Apple Music" : "Spotify"}` : "",
-      item.genre ? `Gênero: ${item.genre}` : "",
-      item.releaseDate ? `Lançamento: ${formatDate(item.releaseDate)}` : "",
-      item.type === "artist" && item.popularity ? `Popularidade: ${item.popularity}%` : ""
-    ].filter(Boolean);
-
-    metaItems.forEach((meta) => {
-      const span = document.createElement("span");
-      span.textContent = meta;
-      detailsMeta.appendChild(span);
-    });
-  } else {
-    console.warn("renderDetails: Elemento detailsMeta não encontrado");
-  }
-
-  // Botões de ação
-  if (spotifyLink) {
-    spotifyLink.href = item.url || "#";
-    spotifyLink.hidden = !item.url;
-    spotifyLink.textContent = item.source === "itunes" ? "Abrir na App Store" : "Abrir no Spotify";
-  } else {
-    console.warn("renderDetails: Elemento spotifyLink não encontrado");
-  }
-
-  if (reviewLink) {
-    reviewLink.href = `#`;
-  } else {
-    console.warn("renderDetails: Elemento reviewLink não encontrado");
-  }
+  document.title = `Vinyl — ${item.title}`;
 }
 
-/**
- * Renderiza mensagem de erro
- * @param {string} message - Mensagem de erro
- */
-function renderError(message) {
-  if (detailsContent) detailsContent.hidden = true;
+function getMoodText(item) {
+  const genre = String(item.genre || "").toLowerCase();
 
-  if (detailsError) {
-    detailsError.hidden = false;
-    detailsError.innerHTML = `
-      <div class="empty-vinyl-icon">!</div>
-      <h2>Ops...</h2>
-      <p>${escapeHTML(message || "Erro desconhecido")}</p>
-      <a href="search.html">Voltar ao catálogo</a>
-    `;
-  }
+  if (genre.includes("hip")) return "Vibe rap/trap";
+  if (genre.includes("r&b")) return "Vibe R&B";
+  if (genre.includes("pop")) return "Pop mood";
+  if (genre.includes("rock")) return "Energia rock";
+  if (genre.includes("jazz")) return "Clima jazz";
+
+  return item.type === "artist" ? "Perfil de artista" : "Descoberta musical";
 }
 
-/**
- * Controla o estado de carregamento
- * @param {boolean} isLoading - Estado de carregamento
- */
-function setLoading(isLoading) {
-  if (detailsLoading) detailsLoading.hidden = !isLoading;
-
-  if (isLoading) {
-    if (detailsContent) detailsContent.hidden = true;
-    if (detailsError) detailsError.hidden = true;
-  }
-}
-
-/* =========================
-   AÇÕES DO USUÁRIO
-========================= */
-
-/**
- * Event listener para favoritar item
- */
-favoriteDetailBtn?.addEventListener("click", () => {
-  if (!currentItem) return;
-  favoriteItem(currentItem);
-});
-
-reviewLink?.addEventListener("click", (e) => {
-  e.preventDefault();
-  if (!currentItem) return;
-  openReviewForItem(currentItem);
-});
-
-/**
- * Adiciona item aos favoritos
- * @async
- * @param {Object} item - Item a favoritar
- */
-async function favoriteItem(item) {
-  if (!currentUser?.uid || !item?.id) return;
+async function checkFavoriteState() {
+  if (!currentItem || !currentUser) return;
 
   try {
-    const favoriteId = `${item.type}_${item.source || "unknown"}_${item.id}`.replaceAll("/", "_");
+    const favoriteId = getFavoriteId(currentItem);
+    const snap = await getDoc(doc(db, "users", currentUser.uid, "favorites", favoriteId));
+
+    if (snap.exists()) {
+      favoriteBtn.classList.add("is-favorite");
+      favoriteBtn.textContent = "✓ Favoritado";
+    } else {
+      favoriteBtn.classList.remove("is-favorite");
+      favoriteBtn.textContent = "♡ Favoritar";
+    }
+  } catch {
+    favoriteBtn.textContent = "♡ Favoritar";
+  }
+}
+
+favoriteBtn?.addEventListener("click", async () => {
+  if (!currentItem || !currentUser) return;
+
+  try {
+    const favoriteId = getFavoriteId(currentItem);
 
     await setDoc(doc(db, "users", currentUser.uid, "favorites", favoriteId), {
-      id: item.id,
-      source: item.source || detectSource(item.id),
-      type: item.type,
-      title: item.title,
-      subtitle: item.subtitle || "",
-      description: item.description || "",
-      image: item.image || "",
-      url: item.url || "",
+      id: currentItem.id,
+      source: currentItem.source,
+      type: currentItem.type,
+      title: currentItem.title,
+      subtitle: currentItem.subtitle || "",
+      description: currentItem.description || "",
+      image: currentItem.image || "",
+      url: currentItem.url || "",
       createdAt: serverTimestamp()
     }, { merge: true });
 
+    favoriteBtn.classList.add("is-favorite");
+    favoriteBtn.textContent = "✓ Favoritado";
+
     showToast("Adicionado aos favoritos.");
   } catch (error) {
-    console.error("Erro ao favoritar:", error);
+    console.error(error);
     showToast("Não foi possível favoritar.");
   }
+});
+
+reviewBtn?.addEventListener("click", () => {
+  if (!currentItem) return;
+
+  reviewPreviewImage.src = currentItem.image || DEFAULT_COVER;
+  reviewPreviewTitle.textContent = currentItem.title;
+  reviewPreviewSubtitle.textContent = currentItem.subtitle || getTypeLabel(currentItem.type);
+  reviewText.value = "";
+
+  reviewModal.hidden = false;
+});
+
+closeReviewBtn?.addEventListener("click", closeReviewModal);
+closeReviewBackdrop?.addEventListener("click", closeReviewModal);
+
+function closeReviewModal() {
+  reviewModal.hidden = true;
 }
 
-/**
- * Abre página de review para um item
- * @param {Object} item - Item para o qual escrever review
- */
-function openReviewForItem(item) {
-  if (!item?.id || !item?.title || !item?.type) return;
+reviewForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
 
-  const query = encodeURIComponent(item.title);
-  const id = encodeURIComponent(item.id);
-  const type = encodeURIComponent(item.type);
-  const source = encodeURIComponent(item.source || detectSource(item.id));
+  if (!currentItem || !currentUser) return;
 
-  window.location.href = `timeline.html?review=${query}&itemId=${id}&type=${type}&source=${source}`;
-}
+  const text = reviewText.value.trim();
+  const rating = Number(ratingInput.value || 5);
 
-/* =========================
-   ENVIAR PARA CHAT
-========================= */
+  if (!text) {
+    showToast("Escreva um texto para a review.");
+    return;
+  }
 
-/**
- * Abre modal para enviar item pelo chat
- * @param {Object} item - Item a enviar
- */
-/**
- * Abre modal para compartilhar item (apenas no chat modal)
- * @param {Object} item - Item a compartilhar
- */
-function openSendChatModal(item) {
-  if (!sendChatModal || !item) return;
+  try {
+    await addDoc(collection(db, "reviews"), {
+      userId: currentUser.uid,
+      userName: currentUserData?.displayName || currentUserData?.username || currentUser.displayName || "Usuário",
+      userAvatar: currentUserData?.photoURL || currentUser.photoURL || DEFAULT_AVATAR,
+      itemId: currentItem.id,
+      itemType: currentItem.type,
+      source: currentItem.source,
+      title: currentItem.title,
+      subtitle: currentItem.subtitle || "",
+      cover: currentItem.image || "",
+      rating,
+      text,
+      likesCount: 0,
+      createdAt: serverTimestamp()
+    });
 
-  if (sendChatPreviewImage) sendChatPreviewImage.src = item.image || DEFAULT_COVER;
-  if (sendChatPreviewTitle) sendChatPreviewTitle.textContent = item.title;
-  if (sendChatPreviewSubtitle) sendChatPreviewSubtitle.textContent = item.subtitle || getTypeLabel(item.type);
+    closeReviewModal();
+    showToast("Review publicada.");
+  } catch (error) {
+    console.error(error);
+    showToast("Não foi possível publicar a review.");
+  }
+});
 
-  if (sendChatUsersList) sendChatUsersList.innerHTML = `<p class="muted-text">Busque um usuário para enviar.</p>`;
-  if (sendChatUserSearch) sendChatUserSearch.value = "";
+sendChatBtn?.addEventListener("click", () => {
+  if (!currentItem) return;
+
+  sendPreviewImage.src = currentItem.image || DEFAULT_COVER;
+  sendPreviewTitle.textContent = currentItem.title;
+  sendPreviewSubtitle.textContent = currentItem.subtitle || getTypeLabel(currentItem.type);
+  sendUserSearch.value = "";
+  sendUsersList.innerHTML = `<p class="muted-text">Busque um usuário para enviar.</p>`;
 
   sendChatModal.hidden = false;
-  sendChatUserSearch?.focus();
-}
-
-function closeSendChatModal() {
-  if (!sendChatModal) return;
-  sendChatModal.hidden = true;
-}
+  sendUserSearch.focus();
+});
 
 closeSendChatBtn?.addEventListener("click", closeSendChatModal);
 closeSendChatBackdrop?.addEventListener("click", closeSendChatModal);
 
-sendChatUserSearch?.addEventListener("input", debounce(async () => {
-  const term = sendChatUserSearch.value.trim();
+function closeSendChatModal() {
+  sendChatModal.hidden = true;
+}
+
+sendUserSearch?.addEventListener("input", debounce(async () => {
+  const term = sendUserSearch.value.trim();
 
   if (!term) {
-    sendChatUsersList.innerHTML = `<p class="muted-text">Busque um usuário para enviar.</p>`;
+    sendUsersList.innerHTML = `<p class="muted-text">Busque um usuário para enviar.</p>`;
     return;
   }
 
   const users = await searchUsers(term);
-  renderSendChatUsers(users);
-}, DEBOUNCE_DELAY));
+  renderSendUsers(users);
+}, 350));
 
-/**
- * Busca usuários por termo
- * @async
- * @param {string} term - Termo de busca
- * @returns {Promise<Array>} Lista de usuários encontrados
- */
 async function searchUsers(term) {
-  if (!term?.trim()) return [];
-
   const normalized = normalizeText(term);
   const users = [];
 
-  // Verificar cache
-  const cacheKey = normalized.substring(0, 3);
-  if (userSearchCache.has(cacheKey)) {
-    return userSearchCache.get(cacheKey).filter(u => 
-      normalizeText(u.title + u.subtitle).includes(normalized)
-    );
-  }
-
   try {
-    const snap = await getDocs(collection(db, "users"));
+    const snap = await getDocs(query(collection(db, "users"), limit(80)));
 
     snap.forEach((docSnap) => {
-      if (docSnap.id === currentUser?.uid) return;
+      if (docSnap.id === currentUser.uid) return;
 
       const data = docSnap.data();
 
       const displayName = data.displayName || data.name || "";
       const username = data.username || "";
+
       const haystack = normalizeText(`${displayName} ${username}`);
 
       if (!haystack.includes(normalized)) return;
 
       users.push({
         id: docSnap.id,
-        title: displayName || username || "Usuário Vinyl",
-        subtitle: username ? `@${username}` : "@usuario",
-        image: data.photoURL || data.avatar || DEFAULT_AVATAR
+        displayName: displayName || username || "Usuário",
+        username: username || "usuario",
+        photoURL: data.photoURL || data.avatar || DEFAULT_AVATAR
       });
     });
 
-    // Cachear resultados
-    if (!userSearchCache.has(cacheKey)) {
-      userSearchCache.set(cacheKey, users);
-    }
-
-    return users.slice(0, MAX_SEARCH_RESULTS);
-  } catch (error) {
-    console.error("Erro ao buscar usuários:", error);
+    return users.slice(0, 10);
+  } catch {
     return [];
   }
 }
 
-/**
- * Renderiza lista de usuários para enviar item
- * @param {Array<Object>} users - Lista de usuários
- */
-function renderSendChatUsers(users) {
-  sendChatUsersList.innerHTML = "";
-
-  if (!Array.isArray(users) || !users.length) {
-    sendChatUsersList.innerHTML = `<p class="muted-text">Nenhum usuário encontrado.</p>`;
+function renderSendUsers(users) {
+  if (!users.length) {
+    sendUsersList.innerHTML = `<p class="muted-text">Nenhum usuário encontrado.</p>`;
     return;
   }
 
-  users.forEach((user) => {
-    if (!user?.id || !user?.title) return;
-
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "send-chat-user";
-    button.setAttribute("aria-label", `Enviar para ${user.title}`);
-
-    button.innerHTML = `
-      <img src="${escapeHTML(user.image || DEFAULT_AVATAR)}" alt="Foto de ${escapeHTML(user.title)}" loading="lazy">
+  sendUsersList.innerHTML = users.map((user) => `
+    <button type="button" class="send-user" data-uid="${escapeHTML(user.id)}">
+      <img src="${escapeHTML(user.photoURL)}" alt="${escapeHTML(user.displayName)}">
 
       <div>
-        <strong>${escapeHTML(user.title)}</strong>
-        <span>${escapeHTML(user.subtitle || "")}</span>
+        <strong>${escapeHTML(user.displayName)}</strong>
+        <span>@${escapeHTML(user.username)}</span>
       </div>
 
       <small>Enviar</small>
-    `;
+    </button>
+  `).join("");
 
+  document.querySelectorAll(".send-user").forEach((button) => {
     button.addEventListener("click", () => {
-      sendItemToUser(user);
-    });
+      const uid = button.dataset.uid;
+      const user = users.find((item) => item.id === uid);
 
-    sendChatUsersList.appendChild(button);
+      if (user) {
+        sendItemToUser(user);
+      }
+    });
   });
 }
 
-/**
- * Envia item para um usuário via chat
- * @async
- * @param {Object} user - Usuário destinatário
- */
 async function sendItemToUser(user) {
-  if (!currentUser?.uid || !currentItem?.id || !user?.id) return;
+  if (!currentItem || !currentUser) return;
 
   try {
-    const chatId = createChatId(currentUser.uid, user.id);
-
-    const text = currentItem.url
-      ? `${currentItem.title} ${currentItem.url}`
-      : currentItem.title;
+    const chatId = [currentUser.uid, user.id].sort().join("_");
 
     await addDoc(collection(db, "messages"), {
       chatId,
       senderUid: currentUser.uid,
       receiverUid: user.id,
       participants: [currentUser.uid, user.id],
-      text,
+      text: currentItem.url ? `${currentItem.title} ${currentItem.url}` : currentItem.title,
       type: currentItem.url ? "link" : "text",
       url: currentItem.url || "",
-      preview: currentItem.url
-        ? {
-            provider: currentItem.source === "itunes" ? "Apple Music" : "Spotify",
-            title: currentItem.title,
-            description: currentItem.description || currentItem.subtitle || "",
-            image: currentItem.image || "",
-            url: currentItem.url,
-            icon: "♪"
-          }
-        : null,
+      preview: {
+        provider: currentItem.source === "itunes" ? "Apple Music / iTunes" : "Spotify",
+        title: currentItem.title,
+        description: currentItem.subtitle || currentItem.description || "",
+        image: currentItem.image || "",
+        url: currentItem.url || "",
+        icon: "♪"
+      },
       musicTitle: currentItem.type === "track" ? currentItem.title : "",
       musicArtist: currentItem.subtitle || "",
-      replyTo: null,
-      reactions: {},
-      edited: false,
-      editedAt: null,
       read: false,
       deleted: false,
       createdAt: serverTimestamp(),
@@ -790,31 +594,119 @@ async function sendItemToUser(user) {
     closeSendChatModal();
     showToast("Enviado no chat.");
   } catch (error) {
-    console.error("Erro ao enviar no chat:", error);
-    showToast("Erro ao enviar no chat.");
+    console.error(error);
+    showToast("Não foi possível enviar.");
   }
 }
 
-/* =========================
-   UTILS
-========================= */
+shareBtn?.addEventListener("click", async () => {
+  if (!currentItem) return;
 
-/**
- * Cria ID único para uma conversa
- * @param {string} uid1 - UID do primeiro usuário
- * @param {string} uid2 - UID do segundo usuário
- * @returns {string} ID da conversa
- */
-function createChatId(uid1, uid2) {
-  if (!uid1 || !uid2) throw new Error("UIDs inválidos.");
-  return [uid1, uid2].sort().join("_");
+  const url = window.location.href;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: `Vinyl — ${currentItem.title}`,
+        text: `Olha isso no Vinyl: ${currentItem.title}`,
+        url
+      });
+    } else {
+      await navigator.clipboard.writeText(url);
+      showToast("Link copiado.");
+    }
+  } catch {
+    showToast("Compartilhamento cancelado.");
+  }
+});
+
+copyLinkBtn?.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+    showToast("Link copiado.");
+  } catch {
+    showToast("Não foi possível copiar.");
+  }
+});
+
+async function loadRelated(item) {
+  const term = item.artistName || item.subtitle || item.title;
+
+  if (!term) {
+    relatedSection.hidden = true;
+    return;
+  }
+
+  try {
+    const related = await searchRelated(term, item.type);
+
+    if (!related.length) {
+      relatedSection.hidden = true;
+      return;
+    }
+
+    relatedTitle.textContent = item.type === "artist" ? "Top músicas" : "Relacionados";
+    relatedSubtitle.textContent = `Mais resultados para ${term}.`;
+
+    relatedGrid.innerHTML = related.slice(0, 8).map((relatedItem) => `
+      <a class="related-card" href="details.html?type=${encodeURIComponent(relatedItem.type)}&id=${encodeURIComponent(relatedItem.id)}&source=${encodeURIComponent(relatedItem.source)}">
+        <img src="${escapeHTML(relatedItem.image || DEFAULT_COVER)}" alt="${escapeHTML(relatedItem.title)}">
+
+        <div>
+          <span>${escapeHTML(getTypeLabel(relatedItem.type))}</span>
+          <strong>${escapeHTML(relatedItem.title)}</strong>
+          <p>${escapeHTML(relatedItem.subtitle || "")}</p>
+        </div>
+      </a>
+    `).join("");
+
+    relatedSection.hidden = false;
+  } catch {
+    relatedSection.hidden = true;
+  }
 }
 
-/**
- * Retorna label em português para tipo de item
- * @param {string} type - Tipo do item
- * @returns {string} Label em português
- */
+async function searchRelated(term, currentType) {
+  try {
+    const response = await fetch(
+      `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=12`
+    );
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+
+    return (data.results || [])
+      .map((item) => ({
+        id: String(item.trackId || item.collectionId || ""),
+        source: "itunes",
+        type: "track",
+        title: item.trackName || item.collectionName || "Música",
+        subtitle: item.artistName || "",
+        image: upgradeITunesImage(item.artworkUrl100) || DEFAULT_COVER
+      }))
+      .filter((item) => item.id && item.id !== currentItem.id);
+  } catch {
+    return [];
+  }
+}
+
+function getFavoriteId(item) {
+  return `${item.type}_${item.source || "unknown"}_${item.id}`.replaceAll("/", "_");
+}
+
+function showLoading(isLoading) {
+  loadingState.hidden = !isLoading;
+}
+
+function showEmpty() {
+  loadingState.hidden = true;
+  detailsHero.hidden = true;
+  insightsGrid.hidden = true;
+  relatedSection.hidden = true;
+  emptyState.hidden = false;
+}
+
 function getTypeLabel(type) {
   const labels = {
     track: "Música",
@@ -826,62 +718,31 @@ function getTypeLabel(type) {
   return labels[type] || "Item";
 }
 
-/**
- * Melhora resolução de imagens do iTunes
- * @param {string} url - URL da imagem
- * @returns {string} URL com melhor resolução
- */
+function formatReleaseDate(date) {
+  if (!date) return "—";
+
+  try {
+    return new Date(date).toLocaleDateString("pt-BR");
+  } catch {
+    return date;
+  }
+}
+
 function upgradeITunesImage(url) {
-  if (!url || typeof url !== "string") return "";
+  if (!url) return "";
 
   return url
     .replace("100x100bb", "800x800bb")
     .replace("100x100", "800x800");
 }
 
-/**
- * Formata data para português
- * @param {string|Date} value - Data a formatar
- * @returns {string} Data formatada
- */
-function formatDate(value) {
-  if (!value) return "";
-
-  try {
-    const date = new Date(value);
-    return isNaN(date.getTime()) ? value : date.toLocaleDateString("pt-BR");
-  } catch {
-    return value;
-  }
-}
-
-/**
- * Formata número para notação compacta
- * @param {number} value - Número a formatar
- * @returns {string} Número formatado
- */
 function formatNumber(value) {
-  const num = Number(value) || 0;
   return new Intl.NumberFormat("pt-BR", {
     notation: "compact",
     maximumFractionDigits: 1
-  }).format(num);
+  }).format(value || 0);
 }
 
-/**
- * Remove tags HTML de uma string
- * @param {string} value - String com HTML
- * @returns {string} String sem HTML
- */
-function stripHTML(value) {
-  return String(value || "").replace(/<[^>]*>/g, "").trim();
-}
-
-/**
- * Normaliza texto removendo acentos e espaços
- * @param {string} value - Texto a normalizar
- * @returns {string} Texto normalizado
- */
 function normalizeText(value) {
   return String(value || "")
     .toLowerCase()
@@ -890,11 +751,6 @@ function normalizeText(value) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-/**
- * Escapa caracteres HTML
- * @param {string} value - Texto a escapar
- * @returns {string} Texto escapado
- */
 function escapeHTML(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
@@ -904,35 +760,25 @@ function escapeHTML(value) {
     .replaceAll("'", "&#039;");
 }
 
-/**
- * Debounce uma função
- * @param {Function} fn - Função a debounce
- * @param {number} delay - Delay em ms
- * @returns {Function} Função debouncenada
- */
 function debounce(fn, delay = 300) {
   let timeout;
 
   return (...args) => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => fn(...args), delay);
+
+    timeout = setTimeout(() => {
+      fn(...args);
+    }, delay);
   };
 }
 
-/**
- * Exibe notificação de toast
- * @param {string} message - Mensagem a exibir
- */
 function showToast(message) {
-  if (!toast) {
-    alert(escapeHTML(message));
-    return;
-  }
+  if (!toast) return;
 
   toast.textContent = message;
   toast.classList.add("show");
 
   setTimeout(() => {
     toast.classList.remove("show");
-  }, TOAST_DURATION);
+  }, 2800);
 }

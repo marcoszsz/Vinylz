@@ -1,36 +1,320 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Vinyl — Timeline</title>
-  <link rel="stylesheet" href="timeline.css">
+
+  <link rel="stylesheet" href="timeline.css" />
+  <meta name="theme-color" content="#07070a" />
 </head>
+
 <body>
 
-  <header class="navbar">
-    <div class="logo">VINYL</div>
+  <div class="app-bg"></div>
 
-    <nav>
+  <header class="navbar">
+    <a href="home.html" class="logo">VINYL</a>
+
+    <nav class="navbar-links" id="navbarLinks">
       <a href="home.html">Home</a>
       <a href="search.html">Catálogo</a>
-      <a href="timeline.html">Timeline</a>
+      <a href="social.html">Social</a>
+      <a href="timeline.html" class="active">Timeline</a>
+      <a href="profile.html">Perfil</a>
     </nav>
+
+    <div class="navbar-actions">
+      <a href="profile.html" class="navbar-profile">
+        <img
+          src="https://placehold.co/120x120/111111/ff4d6d?text=V"
+          alt="Avatar"
+          id="navbarAvatar"
+        />
+        <span id="navbarUsername">Perfil</span>
+      </a>
+
+      <button type="button" class="logout-btn" id="logoutBtn">
+        Sair
+      </button>
+
+      <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menu">
+        ☰
+      </button>
+    </div>
   </header>
 
   <main class="timeline-page">
-    <section class="timeline-header">
-      <span class="tag">Sua atividade</span>
-      <h1>Timeline Musical</h1>
-      <p>Veja artistas, músicas e álbuns que você favoritou no Vinyl.</p>
+
+    <section class="timeline-hero">
+      <div class="hero-content">
+        <span class="eyebrow">Feed social</span>
+
+        <h1>
+          A timeline musical
+          <span>do Vinyl.</span>
+        </h1>
+
+        <p>
+          Poste o que está ouvindo, compartilhe links do Spotify, publique reviews,
+          responda amigos e descubra a vibe da comunidade.
+        </p>
+      </div>
+
+      <div class="hero-orb" aria-hidden="true">
+        <div class="vinyl-disc"></div>
+      </div>
     </section>
 
-    <section id="timelineList" class="timeline-list">
-      <p class="message">Nenhuma atividade ainda.</p>
-    </section>
+    <div class="timeline-layout">
+
+      <!-- LEFT SIDEBAR -->
+      <aside class="left-sidebar">
+
+        <section class="side-card profile-card">
+          <img
+            id="sidebarAvatar"
+            src="https://placehold.co/240x240/111111/ff4d6d?text=V"
+            alt="Avatar"
+          />
+
+          <h3 id="sidebarName">Carregando...</h3>
+          <p id="sidebarHandle">@usuario</p>
+
+          <div class="profile-stats">
+            <div>
+              <strong id="profilePostsCount">0</strong>
+              <span>Posts</span>
+            </div>
+
+            <div>
+              <strong id="profileFollowingCount">0</strong>
+              <span>Seguindo</span>
+            </div>
+          </div>
+
+          <a href="profile.html" class="side-primary-btn">
+            Ver perfil
+          </a>
+        </section>
+
+        <section class="side-card shortcuts-card">
+          <h3>Atalhos</h3>
+
+          <a href="search.html">Buscar músicas</a>
+          <a href="social.html">Explorar social</a>
+          <a href="profile.html">Editar perfil</a>
+          <a href="compatibility.html">Compatibilidade</a>
+        </section>
+
+      </aside>
+
+      <!-- CENTER FEED -->
+      <section class="feed-column">
+
+        <!-- COMPOSER -->
+        <section class="composer-card">
+          <div class="composer-top">
+            <img
+              id="composerAvatar"
+              src="https://placehold.co/120x120/111111/ff4d6d?text=V"
+              alt="Avatar"
+            />
+
+            <div class="composer-main">
+              <textarea
+                id="postText"
+                placeholder="O que você está ouvindo agora?"
+                maxlength="700"
+              ></textarea>
+
+              <div class="composer-preview" id="composerPreview" hidden>
+                <div class="composer-preview-icon">♪</div>
+
+                <div>
+                  <strong id="composerPreviewTitle">Preview</strong>
+                  <span id="composerPreviewSubtitle">Link detectado</span>
+                </div>
+
+                <button type="button" id="removePreviewBtn">×</button>
+              </div>
+
+              <div class="composer-fields">
+                <input
+                  type="url"
+                  id="spotifyLinkInput"
+                  placeholder="Cole um link do Spotify, YouTube ou Apple Music"
+                />
+
+                <input
+                  type="url"
+                  id="imageUrlInput"
+                  placeholder="Cole uma imagem/GIF por URL"
+                />
+              </div>
+
+              <div class="composer-bottom">
+                <div class="composer-tools">
+                  <select id="postTypeSelect">
+                    <option value="normal">Post normal</option>
+                    <option value="review">Review</option>
+                    <option value="listening">Estou ouvindo</option>
+                    <option value="recommendation">Recomendação</option>
+                  </select>
+
+                  <select id="reviewRatingSelect">
+                    <option value="0">Sem nota</option>
+                    <option value="5">★★★★★ — 5</option>
+                    <option value="4">★★★★☆ — 4</option>
+                    <option value="3">★★★☆☆ — 3</option>
+                    <option value="2">★★☆☆☆ — 2</option>
+                    <option value="1">★☆☆☆☆ — 1</option>
+                  </select>
+                </div>
+
+                <button type="button" id="publishPostBtn">
+                  Publicar
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TABS -->
+        <section class="feed-tabs-card">
+          <div class="feed-tabs" id="feedTabs">
+            <button type="button" class="active" data-tab="for-you">Para você</button>
+            <button type="button" data-tab="following">Seguindo</button>
+            <button type="button" data-tab="reviews">Reviews</button>
+          </div>
+        </section>
+
+        <!-- STORIES -->
+        <section class="stories-card">
+          <div class="section-title-row">
+            <h2>Stories</h2>
+            <button type="button" id="newStoryBtn">+ Story</button>
+          </div>
+
+          <div class="stories-row" id="storiesRow">
+            <div class="story-pill">
+              <div class="story-avatar own">VINYL</div>
+              <span>Seu story</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- FEED -->
+        <section class="feed-card">
+          <div class="section-title-row">
+            <div>
+              <h2>Feed</h2>
+              <p id="feedInfoText">Carregando posts...</p>
+            </div>
+          </div>
+
+          <div id="feedList" class="feed-list">
+            <p class="empty-feed">Carregando posts...</p>
+          </div>
+        </section>
+
+      </section>
+
+      <!-- RIGHT SIDEBAR -->
+      <aside class="right-sidebar">
+
+        <section class="side-card">
+          <div class="side-card-title">
+            <h3>Em alta no Vinyl</h3>
+            <p>Assuntos e buscas da comunidade.</p>
+          </div>
+
+          <div class="trending-list" id="trendingList">
+            <p class="side-empty">Carregando...</p>
+          </div>
+        </section>
+
+        <section class="side-card">
+          <div class="side-card-title">
+            <h3>Sugestões</h3>
+            <p>Pessoas para seguir.</p>
+          </div>
+
+          <div class="suggestions-list" id="suggestionsList">
+            <p class="side-empty">Carregando...</p>
+          </div>
+        </section>
+
+        <section class="side-card tip-card">
+          <span>💬</span>
+          <h3>Timeline V2</h3>
+          <p>
+            Agora os posts abrem em modal, têm respostas, repost,
+            edição e preview de link.
+          </p>
+        </section>
+
+      </aside>
+
+    </div>
+
   </main>
 
-<script type="module" src="timeline.js"></script>
-<script type="module" src="protect.js"></script>
+  <!-- MODAL POST -->
+  <div class="post-modal" id="postModal" hidden>
+    <div class="post-modal-backdrop" id="closePostModalBackdrop"></div>
+
+    <section class="post-modal-card">
+      <button type="button" class="modal-close-btn" id="closePostModalBtn">
+        ×
+      </button>
+
+      <article id="postModalContent">
+        <p class="empty-feed">Carregando post...</p>
+      </article>
+    </section>
+  </div>
+
+  <!-- MODAL EDITAR POST -->
+  <div class="edit-modal" id="editPostModal" hidden>
+    <div class="edit-modal-backdrop" id="closeEditPostBackdrop"></div>
+
+    <section class="edit-modal-card">
+      <header>
+        <div>
+          <span>Editar</span>
+          <h2>Editar post</h2>
+        </div>
+
+        <button type="button" id="closeEditPostBtn">×</button>
+      </header>
+
+      <textarea id="editPostText" maxlength="700"></textarea>
+
+      <input
+        type="url"
+        id="editPostImage"
+        placeholder="URL da imagem"
+      />
+
+      <input
+        type="url"
+        id="editPostSpotify"
+        placeholder="URL do link"
+      />
+
+      <button type="button" id="saveEditPostBtn">
+        Salvar alterações
+      </button>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="timeline.js"></script>
+
 </body>
+
 </html>

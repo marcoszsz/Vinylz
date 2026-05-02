@@ -1,24 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>VINYL — Catálogo</title>
+  <title>Vinyl — Catálogo</title>
 
   <link rel="stylesheet" href="search.css" />
-  <meta name="theme-color" content="#0b0b0d" />
+  <meta name="theme-color" content="#08080c" />
 </head>
 
 <body>
+  <div class="app-bg"></div>
 
-  <!-- NAVBAR -->
   <header class="navbar">
-
-    <a href="home.html" class="logo">
-      VINYL
-    </a>
+    <a href="home.html" class="logo">VINYL</a>
 
     <nav class="navbar-links" id="navbarLinks">
       <a href="home.html">Home</a>
@@ -28,474 +24,234 @@
     </nav>
 
     <div class="navbar-actions">
-
       <a href="profile.html" class="navbar-profile">
         <img
-          src="https://placehold.co/100x100/111111/ff4d6d?text=V"
+          src="https://placehold.co/120x120/111111/ff4d6d?text=V"
           alt="Avatar"
           id="navbarAvatar"
         />
         <span id="navbarUsername">Perfil</span>
       </a>
 
-      <button type="button" class="logout-btn" id="logoutBtn">
-        Sair
-      </button>
+      <button type="button" class="logout-btn" id="logoutBtn">Sair</button>
 
       <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menu">
         ☰
       </button>
-
     </div>
-
   </header>
 
-  <!-- MAIN -->
-  <main class="search-page">
+  <main class="catalog-page">
 
-    <!-- HERO -->
-    <section class="search-hero">
+    <section class="hero-card">
+      <div class="hero-content">
+        <span class="eyebrow">Catálogo musical</span>
 
-      <div class="hero-bg-word">
-        VINYL
-      </div>
+        <h1>
+          Descubra sua próxima
+          <span>obsessão musical.</span>
+        </h1>
 
-      <span class="hero-badge">
-        Catálogo Musical
-      </span>
+        <p>
+          Busque músicas, álbuns, artistas, playlists e usuários. Favorite, escreva reviews e envie achados direto no chat.
+        </p>
 
-      <h1>
-        Descubra sua próxima obsessão musical.
-      </h1>
+        <form class="search-form" id="searchForm">
+          <div class="search-input-wrap">
+            <span>⌕</span>
+            <input
+              type="search"
+              id="searchInput"
+              placeholder="Busque por SZA, The Weeknd, Frank Ocean..."
+              autocomplete="off"
+            />
+          </div>
 
-      <p>
-        Busque músicas, álbuns, artistas, playlists e usuários. Favorite, escreva reviews
-        e envie achados direto no chat.
-      </p>
+          <button type="submit" id="searchBtn">Buscar</button>
+          <button type="button" id="clearSearchBtn" class="clear-btn">Limpar</button>
+        </form>
 
-      <!-- SEARCH BAR -->
-      <form class="search-form" id="searchForm">
-
-        <div class="search-input-wrap">
-          <span class="search-icon">⌕</span>
-
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Buscar artista, álbum, música, playlist ou usuário..."
-            autocomplete="off"
-          />
+        <div class="filter-row" id="searchTabs">
+          <button type="button" class="active" data-type="all">Tudo</button>
+          <button type="button" data-type="users">Usuários</button>
+          <button type="button" data-type="album">Álbuns</button>
+          <button type="button" data-type="track">Músicas</button>
+          <button type="button" data-type="artist">Artistas</button>
+          <button type="button" data-type="playlist">Playlists</button>
         </div>
 
-        <button type="submit" id="searchBtn">
-          Buscar
-        </button>
-
-        <button type="button" id="clearSearchBtn">
-          Limpar
-        </button>
-
-      </form>
-
-      <!-- TYPE FILTERS -->
-      <div class="search-tabs" id="searchTabs">
-
-        <button type="button" class="active" data-type="all">
-          Tudo
-        </button>
-
-        <button type="button" data-type="users">
-          Usuários
-        </button>
-
-        <button type="button" data-type="album">
-          Álbuns
-        </button>
-
-        <button type="button" data-type="track">
-          Músicas
-        </button>
-
-        <button type="button" data-type="artist">
-          Artistas
-        </button>
-
-        <button type="button" data-type="playlist">
-          Playlists
-        </button>
-
+        <div class="genre-row" id="genreChips">
+          <button type="button" data-genre="Rock">Rock</button>
+          <button type="button" data-genre="Pop">Pop</button>
+          <button type="button" data-genre="Hip Hop">Hip Hop</button>
+          <button type="button" data-genre="R&B">R&B</button>
+          <button type="button" data-genre="Indie">Indie</button>
+          <button type="button" data-genre="Electronic">Electronic</button>
+          <button type="button" data-genre="Jazz">Jazz</button>
+          <button type="button" data-genre="K-Pop">K-Pop</button>
+          <button type="button" data-genre="MPB">MPB</button>
+        </div>
       </div>
 
-      <!-- GENRE FILTERS -->
-      <div class="genre-chips" id="genreChips">
-
-        <button type="button" data-genre="Rock">
-          Rock
-        </button>
-
-        <button type="button" data-genre="Pop">
-          Pop
-        </button>
-
-        <button type="button" data-genre="Hip Hop">
-          Hip Hop
-        </button>
-
-        <button type="button" data-genre="R&B">
-          R&amp;B
-        </button>
-
-        <button type="button" data-genre="Indie">
-          Indie
-        </button>
-
-        <button type="button" data-genre="Electronic">
-          Electronic
-        </button>
-
-        <button type="button" data-genre="Jazz">
-          Jazz
-        </button>
-
-        <button type="button" data-genre="K-Pop">
-          K-Pop
-        </button>
-
-        <button type="button" data-genre="MPB">
-          MPB
-        </button>
-
-      </div>
-
+      <div class="hero-watermark">VINYL</div>
     </section>
 
-    <!-- CONTENT GRID -->
-    <section class="search-content-grid">
-
-      <!-- MAIN COLUMN -->
-      <div class="search-main-column">
-
-        <!-- QUICK SEARCH -->
-        <section class="quick-section">
-
-          <div class="section-title-row">
-            <div>
-              <h2>Buscas rápidas</h2>
-              <p>Comece por artistas e sons que combinam com a vibe do Vinyl.</p>
-            </div>
-          </div>
-
-          <div class="quick-searches" id="quickSearches">
-
-            <button type="button" data-query="The Weeknd">
-              The Weeknd
-            </button>
-
-            <button type="button" data-query="SZA">
-              SZA
-            </button>
-
-            <button type="button" data-query="Frank Ocean">
-              Frank Ocean
-            </button>
-
-            <button type="button" data-query="Tyler">
-              Tyler
-            </button>
-
-            <button type="button" data-query="Kendrick">
-              Kendrick
-            </button>
-
-            <button type="button" data-query="Taylor Swift">
-              Taylor Swift
-            </button>
-
-            <button type="button" data-query="Guns N Roses">
-              Guns N’ Roses
-            </button>
-
-          </div>
-
-        </section>
-
-        <!-- RECENT SEARCHES -->
-        <section class="recent-searches-card" id="recentSearchesSection">
-
-          <div class="section-title-row">
-            <div>
-              <h2>Buscas recentes</h2>
-              <p>Volte rápido para o que você estava procurando.</p>
-            </div>
-
-            <button type="button" class="text-action-btn" id="clearRecentSearchesBtn">
-              Limpar histórico
-            </button>
-          </div>
-
-          <div class="recent-searches-list" id="recentSearchesList">
-            <p class="muted-text">Nenhuma busca recente ainda.</p>
-          </div>
-
-        </section>
-
-        <!-- RESULTS HEADER -->
-        <section class="results-top">
-
-          <div>
-            <h2>Resultados</h2>
-            <p id="resultsSubtitle">
-              Pesquise algo para começar.
-            </p>
-          </div>
-
-          <div class="results-actions">
-
-            <button type="button" class="outline-pill-btn" id="exploreTrendingBtn">
-              Explorar em alta
-            </button>
-
-            <a href="timeline.html" class="timeline-link">
-              Ver Timeline
-            </a>
-
-          </div>
-
-        </section>
-
-        <!-- EMPTY STATE -->
-        <section class="empty-search-state" id="emptySearchState">
-
-          <div class="empty-vinyl-icon">
-            ♪
-          </div>
-
-          <h3>Comece sua busca</h3>
-
-          <p>
-            Procure por uma música, artista, álbum, playlist ou usuário. Os resultados
-            aparecem aqui em cards com ações rápidas.
-          </p>
-
-          <button type="button" id="emptyExploreBtn">
-            Explorar em alta
-          </button>
-
-        </section>
-
-        <!-- LOADING -->
-        <section class="search-loading" id="searchLoading" hidden>
-
-          <div class="loader"></div>
-
-          <p>Carregando catálogo...</p>
-
-        </section>
-
-        <!-- RESULTS -->
-        <section class="results-grid" id="resultsGrid" hidden>
-          <!-- search.js injeta os cards aqui -->
-        </section>
-
+    <section class="quick-section">
+      <div class="section-title">
+        <h2>Buscas rápidas</h2>
+        <p>Comece por artistas e sons que combinam com a vibe do Vinyl.</p>
       </div>
 
-      <!-- SIDE COLUMN -->
-      <aside class="search-side-column">
+      <div class="quick-list" id="quickSearches">
+        <button type="button" data-query="SZA">SZA</button>
+        <button type="button" data-query="Frank Ocean">Frank Ocean</button>
+        <button type="button" data-query="Tyler, The Creator">Tyler</button>
+        <button type="button" data-query="Kendrick Lamar">Kendrick</button>
+        <button type="button" data-query="Taylor Swift">Taylor Swift</button>
+        <button type="button" data-query="Guns N' Roses">Guns N’ Roses</button>
+        <button type="button" data-query="BTS">BTS</button>
+        <button type="button" data-query="TWICE">TWICE</button>
+      </div>
+    </section>
 
-        <!-- TRENDING -->
-        <section class="side-card">
+    <div class="catalog-layout">
 
-          <div class="section-title-row compact">
+      <section class="results-column">
+
+        <section class="recent-card">
+          <div>
+            <h2>Buscas recentes</h2>
+            <p>Volte rápido para o que você estava procurando.</p>
+          </div>
+
+          <button type="button" id="clearRecentSearchesBtn">
+            Limpar histórico
+          </button>
+
+          <div class="recent-list" id="recentSearchesList">
+            <p class="muted-text">Nenhuma busca recente ainda.</p>
+          </div>
+        </section>
+
+        <section class="results-section">
+          <div class="results-header">
             <div>
-              <h3>Em alta no Vinyl</h3>
-              <p>Pesquisas que combinam com a comunidade.</p>
+              <h2>Resultados</h2>
+              <p id="resultsSubtitle">Pesquise algo para começar.</p>
             </div>
+
+            <div class="results-actions">
+              <button type="button" id="exploreTrendingBtn">Explorar em alta</button>
+              <a href="timeline.html">Ver timeline</a>
+            </div>
+          </div>
+
+          <div class="search-loading" id="searchLoading" hidden>
+            <div class="loader"></div>
+            <span>Buscando no catálogo...</span>
+          </div>
+
+          <div class="empty-search-state" id="emptySearchState">
+            <div class="empty-vinyl-icon">♪</div>
+            <h3>Procure sua próxima música favorita</h3>
+            <p>Busque por música, álbum, artista, playlist ou usuário.</p>
+            <button type="button" id="emptyExploreBtn">Explorar em alta</button>
+          </div>
+
+          <div class="results-grid" id="resultsGrid" hidden></div>
+        </section>
+
+      </section>
+
+      <aside class="catalog-sidebar">
+
+        <section class="sidebar-card">
+          <div class="sidebar-title">
+            <h3>Em alta no Vinyl</h3>
+            <p>Pesquisas que combinam com a comunidade.</p>
           </div>
 
           <div class="trending-list" id="trendingList">
-
-            <button type="button" data-query="The Weeknd">
-              <span>🔥</span>
-              <div>
-                <strong>The Weeknd</strong>
-                <small>Pop alternativo</small>
-              </div>
-            </button>
-
-            <button type="button" data-query="Guns N Roses">
-              <span>🎸</span>
-              <div>
-                <strong>Guns N’ Roses</strong>
-                <small>Rock clássico</small>
-              </div>
-            </button>
-
-            <button type="button" data-query="SZA">
-              <span>💿</span>
-              <div>
-                <strong>SZA</strong>
-                <small>R&amp;B</small>
-              </div>
-            </button>
-
-            <button type="button" data-query="Frank Ocean">
-              <span>🌊</span>
-              <div>
-                <strong>Frank Ocean</strong>
-                <small>Alt R&amp;B</small>
-              </div>
-            </button>
-
+            <p class="muted-text">Carregando em alta...</p>
           </div>
-
         </section>
 
-        <!-- TOP GENRES -->
-        <section class="side-card">
-
-          <div class="section-title-row compact">
-            <div>
-              <h3>Top gêneros</h3>
-              <p>Filtre por uma vibe.</p>
-            </div>
+        <section class="sidebar-card">
+          <div class="sidebar-title">
+            <h3>Top gêneros</h3>
+            <p>Filtros por uma vibe.</p>
           </div>
 
-          <div class="top-genres-list" id="topGenresList">
-
-            <button type="button" data-genre="Rock">
-              Rock
-            </button>
-
-            <button type="button" data-genre="Trap">
-              Trap
-            </button>
-
-            <button type="button" data-genre="Pop">
-              Pop
-            </button>
-
-            <button type="button" data-genre="Rap">
-              Rap
-            </button>
-
-            <button type="button" data-genre="Metal">
-              Metal
-            </button>
-
-            <button type="button" data-genre="MPB">
-              MPB
-            </button>
-
+          <div class="top-genres" id="topGenresList">
+            <button type="button" data-genre="Rock">Rock</button>
+            <button type="button" data-genre="Trap">Trap</button>
+            <button type="button" data-genre="Pop">Pop</button>
+            <button type="button" data-genre="Rap">Rap</button>
+            <button type="button" data-genre="Metal">Metal</button>
+            <button type="button" data-genre="MPB">MPB</button>
+            <button type="button" data-genre="R&B">R&B</button>
+            <button type="button" data-genre="K-Pop">K-Pop</button>
           </div>
-
         </section>
 
-        <!-- SEND TO CHAT HINT -->
-        <section class="side-card highlight-card">
-
-          <span class="side-icon">💬</span>
-
+        <section class="sidebar-card chat-tip-card">
+          <span>💬</span>
           <h3>Envie achados no chat</h3>
-
-          <p>
-            Encontrou uma música boa? Use o botão “Enviar no chat” nos resultados
-            para compartilhar com alguém.
-          </p>
-
+          <p>Compartilhe uma música, álbum ou artista com seus amigos sem sair do catálogo.</p>
         </section>
 
       </aside>
-
-    </section>
-
+    </div>
   </main>
 
-  <!-- ITEM DETAILS MODAL -->
   <div class="item-modal" id="itemModal" hidden>
+    <div class="modal-backdrop" id="closeItemModalBackdrop"></div>
 
-    <div class="item-modal-backdrop" id="closeItemModalBackdrop"></div>
+    <section class="item-modal-card">
+      <button class="modal-close" type="button" id="closeItemModalBtn">×</button>
 
-    <section class="item-modal-panel">
+      <img
+        src="https://placehold.co/600x600/111111/ff4d6d?text=VINYL"
+        alt="Capa"
+        id="modalItemCover"
+      />
 
-      <button type="button" class="modal-close-btn" id="closeItemModalBtn" aria-label="Fechar">
-        ×
-      </button>
-
-      <div class="item-modal-cover-wrap">
-        <img
-          src="https://placehold.co/600x600/111111/ff4d6d?text=VINYL"
-          alt="Capa"
-          id="modalItemCover"
-        />
-      </div>
-
-      <div class="item-modal-content">
-
-        <span class="modal-item-type" id="modalItemType">
-          Música
-        </span>
-
-        <h2 id="modalItemTitle">
-          Título
-        </h2>
-
-        <p id="modalItemSubtitle">
-          Artista • Álbum
-        </p>
-
-        <p id="modalItemDescription">
-          Veja detalhes, favorite, escreva review ou envie para alguém no chat.
-        </p>
+      <div class="modal-info">
+        <span id="modalItemType">Música</span>
+        <h2 id="modalItemTitle">Título</h2>
+        <p id="modalItemSubtitle">Subtítulo</p>
+        <small id="modalItemDescription">Descrição</small>
 
         <div class="modal-actions">
-
           <a href="#" target="_blank" rel="noopener noreferrer" id="modalOpenSpotifyBtn">
-            Abrir no Spotify
+            Abrir
           </a>
 
-          <button type="button" id="modalFavoriteBtn">
-            Favoritar
-          </button>
-
-          <button type="button" id="modalReviewBtn">
-            Review
-          </button>
-
-          <button type="button" id="modalSendChatBtn">
-            Enviar no chat
-          </button>
-
+          <button type="button" id="modalFavoriteBtn">Favoritar</button>
+          <button type="button" id="modalReviewBtn">Review</button>
+          <button type="button" id="modalSendChatBtn">Enviar no chat</button>
         </div>
-
       </div>
-
     </section>
-
   </div>
 
-  <!-- SEND TO CHAT MODAL -->
   <div class="send-chat-modal" id="sendChatModal" hidden>
+    <div class="modal-backdrop" id="closeSendChatBackdrop"></div>
 
-    <div class="send-chat-backdrop" id="closeSendChatBackdrop"></div>
-
-    <section class="send-chat-panel">
-
-      <header class="send-chat-header">
+    <section class="send-chat-card">
+      <header>
         <div>
           <h2>Enviar no chat</h2>
           <p>Escolha um usuário para compartilhar esse achado.</p>
         </div>
 
-        <button type="button" id="closeSendChatBtn" aria-label="Fechar">
-          ×
-        </button>
+        <button type="button" id="closeSendChatBtn">×</button>
       </header>
 
-      <div class="send-chat-preview" id="sendChatPreview">
-
+      <div class="send-preview">
         <img
-          src="https://placehold.co/120x120/111111/ff4d6d?text=V"
-          alt="Preview"
+          src="https://placehold.co/160x160/111111/ff4d6d?text=♪"
+          alt="Capa"
           id="sendChatPreviewImage"
         />
 
@@ -503,33 +259,23 @@
           <strong id="sendChatPreviewTitle">Título</strong>
           <span id="sendChatPreviewSubtitle">Artista</span>
         </div>
-
       </div>
 
-      <div class="send-chat-search">
-        <input
-          type="text"
-          id="sendChatUserSearch"
-          placeholder="Buscar usuário..."
-          autocomplete="off"
-        />
-      </div>
+      <input
+        type="text"
+        id="sendChatUserSearch"
+        placeholder="Buscar usuário..."
+        autocomplete="off"
+      />
 
-      <div class="send-chat-users" id="sendChatUsersList">
+      <div class="send-users-list" id="sendChatUsersList">
         <p class="muted-text">Busque um usuário para enviar.</p>
       </div>
-
     </section>
-
   </div>
 
-  <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
-  <!-- SCRIPTS -->
-  <script type="module" src="protect.js"></script>
   <script type="module" src="search.js"></script>
-
 </body>
-
 </html>

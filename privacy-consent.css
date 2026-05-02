@@ -1,76 +1,647 @@
-.privacy-consent-banner {
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #07070a;
+  --card: rgba(18, 18, 24, .82);
+  --card-strong: rgba(24, 24, 32, .96);
+  --border: rgba(255, 255, 255, .08);
+  --border-pink: rgba(255, 63, 127, .28);
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, .62);
+  --muted-2: rgba(255, 255, 255, .42);
+  --pink: #ff3f7f;
+  --pink-2: #ff2d55;
+  --danger: #ff4b4b;
+  --green: #42e695;
+  --radius-xl: 34px;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --shadow: 0 28px 90px rgba(0, 0, 0, .52);
+  --shadow-pink: 0 18px 44px rgba(255, 45, 85, .26);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(255, 47, 105, .18), transparent 30%),
+    radial-gradient(circle at top right, rgba(255, 77, 109, .10), transparent 34%),
+    linear-gradient(180deg, #10070c 0%, #050506 100%);
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
   position: fixed;
-  bottom: 0;
-  left: 0;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 85%);
+  z-index: -2;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  width: 420px;
+  height: 420px;
+  right: -150px;
+  bottom: -160px;
+  border-radius: 50%;
+  background: rgba(255, 45, 85, .14);
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===============================
+   PAGE WRAPPER
+================================ */
+
+.privacy-page,
+.privacy-consent-page,
+.consent-page,
+main {
+  width: min(980px, calc(100% - 32px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 34px 0 60px;
+  display: grid;
+  place-items: center;
+}
+
+/* ===============================
+   LOGO / BRAND
+================================ */
+
+.logo,
+.brand,
+.privacy-logo {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0 auto 22px;
+  color: var(--pink);
+  text-decoration: none;
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  font-weight: 1000;
+  letter-spacing: .34em;
+  line-height: 1;
+  text-shadow: 0 0 28px rgba(255, 63, 127, .38);
+}
+
+/* ===============================
+   MAIN CARD
+================================ */
+
+.privacy-card,
+.consent-card,
+.privacy-consent-card,
+.card,
+section {
   width: 100%;
-  background: rgba(20, 20, 20, 0.95);
-  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  padding: clamp(24px, 4vw, 42px);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(circle at top right, rgba(255, 63, 127, .18), transparent 32%),
+    radial-gradient(circle at bottom left, rgba(255, 45, 85, .10), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .018)),
+    var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+}
+
+.privacy-card::before,
+.consent-card::before,
+.privacy-consent-card::before,
+.card::before,
+section::before {
+  content: "";
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  top: -150px;
+  right: -90px;
+  border-radius: 50%;
+  background: rgba(255, 63, 127, .18);
+  filter: blur(46px);
+  pointer-events: none;
+}
+
+.privacy-card::after,
+.consent-card::after,
+.privacy-consent-card::after,
+.card::after,
+section::after {
+  content: "";
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  left: 50%;
+  top: 70px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, transparent 0 18px, rgba(255, 63, 127, .5) 19px 32px, transparent 33px),
+    repeating-radial-gradient(circle, rgba(255, 255, 255, .08) 0 1px, transparent 1px 10px),
+    #09090d;
+  opacity: .18;
+  pointer-events: none;
+}
+
+/* ===============================
+   HEADINGS
+================================ */
+
+h1,
+.privacy-title,
+.consent-title {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  max-width: 760px;
+  font-size: clamp(2.15rem, 7vw, 4.6rem);
+  line-height: .94;
+  letter-spacing: -.06em;
+  color: #fff;
+}
+
+h1 span,
+.privacy-title span,
+.consent-title span {
+  background: linear-gradient(135deg, #fff, #ff91b0 60%, var(--pink));
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+h2 {
+  position: relative;
+  z-index: 2;
+  margin: 28px 0 10px;
+  font-size: 1.3rem;
+  letter-spacing: -.025em;
+  color: #fff;
+}
+
+h3 {
+  position: relative;
+  z-index: 2;
+  margin: 18px 0 8px;
+  font-size: 1rem;
+  color: #fff;
+}
+
+p,
+li {
+  position: relative;
+  z-index: 2;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+p {
+  margin: 14px 0 0;
+}
+
+ul,
+ol {
+  position: relative;
+  z-index: 2;
+  margin: 16px 0 0;
+  padding-left: 20px;
+}
+
+li + li {
+  margin-top: 8px;
+}
+
+strong {
+  color: #fff;
+}
+
+/* ===============================
+   BADGE / EYEBROW
+================================ */
+
+.badge,
+.eyebrow,
+.privacy-badge,
+.consent-badge {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: #ff7ba2;
+  background: rgba(255, 77, 109, .12);
+  border: 1px solid rgba(255, 77, 109, .20);
+  font-size: .78rem;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* ===============================
+   CONSENT OPTIONS
+================================ */
+
+.consent-options,
+.privacy-options,
+.options-list {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.consent-option,
+.privacy-option,
+.option-card,
+label {
+  position: relative;
+  z-index: 2;
+}
+
+.consent-option,
+.privacy-option,
+.option-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .045);
+  border: 1px solid var(--border);
+  transition: .18s ease;
+}
+
+.consent-option:hover,
+.privacy-option:hover,
+.option-card:hover {
+  border-color: rgba(255, 77, 109, .28);
+  background: rgba(255, 77, 109, .075);
+}
+
+.consent-option div,
+.privacy-option div,
+.option-card div {
+  min-width: 0;
+}
+
+.consent-option strong,
+.privacy-option strong,
+.option-card strong {
+  display: block;
+  font-size: .98rem;
+  color: #fff;
+}
+
+.consent-option span,
+.privacy-option span,
+.option-card span {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.45;
+}
+
+/* ===============================
+   CHECKBOX / SWITCH
+================================ */
+
+input[type="checkbox"] {
+  flex: 0 0 auto;
+  appearance: none;
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+  cursor: pointer;
+  position: relative;
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .14);
+  transition: .2s ease;
+}
+
+input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 4px;
+  top: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .9);
+  transition: .2s ease;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .32);
+}
+
+input[type="checkbox"]:checked {
+  background: linear-gradient(135deg, var(--pink), var(--pink-2));
+  border-color: rgba(255, 77, 109, .7);
+  box-shadow: 0 0 24px rgba(255, 63, 127, .24);
+}
+
+input[type="checkbox"]:checked::before {
+  transform: translateX(20px);
+}
+
+/* ===============================
+   FORMS
+================================ */
+
+form {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  margin-top: 24px;
+}
+
+.input-group,
+.form-group {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, .84);
+  font-size: .9rem;
+  font-weight: 900;
+}
+
+input:not([type="checkbox"]),
+textarea,
+select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  outline: none;
+  color: #fff;
+  padding: 14px 15px;
+  background: rgba(255, 255, 255, .045);
+  transition: .18s ease;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+input:not([type="checkbox"]):focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(255, 77, 109, .5);
+  box-shadow: 0 0 0 4px rgba(255, 77, 109, .08);
+}
+
+::placeholder {
+  color: rgba(255, 255, 255, .36);
+}
+
+/* ===============================
+   BUTTONS
+================================ */
+
+.actions,
+.button-row,
+.consent-actions,
+.privacy-actions {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  z-index: 1000;
-  box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.25);
-  font-family: Inter, system-ui, sans-serif;
+  gap: 12px;
+  margin-top: 28px;
 }
 
-.privacy-consent-banner.hidden {
-  display: none;
+button,
+.btn,
+.primary-btn,
+.secondary-btn,
+.accept-btn,
+.decline-btn,
+.save-btn {
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 48px;
+  padding: 13px 18px;
+  font-weight: 1000;
+  text-decoration: none;
+  transition: .18s ease;
 }
 
-.privacy-consent-banner p {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  max-width: 60ch;
+.primary-btn,
+.accept-btn,
+.save-btn,
+button[type="submit"] {
+  color: #fff;
+  background: linear-gradient(135deg, var(--pink), var(--pink-2));
+  box-shadow: var(--shadow-pink);
 }
 
-.privacy-consent-banner a {
-  color: #8be9fd;
+.primary-btn:hover,
+.accept-btn:hover,
+.save-btn:hover,
+button[type="submit"]:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.secondary-btn,
+.decline-btn,
+.btn-secondary {
+  color: rgba(255, 255, 255, .86);
+  background: rgba(255, 255, 255, .055);
+  border: 1px solid var(--border);
+}
+
+.secondary-btn:hover,
+.decline-btn:hover,
+.btn-secondary:hover {
+  color: #fff;
+  border-color: rgba(255, 77, 109, .34);
+  background: rgba(255, 77, 109, .09);
+}
+
+button:disabled,
+.btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ===============================
+   LINKS / FOOTER
+================================ */
+
+small,
+.footer-note,
+.privacy-note,
+.consent-note {
+  position: relative;
+  z-index: 2;
+  display: block;
+  margin-top: 18px;
+  color: var(--muted-2);
+  font-size: .84rem;
+  line-height: 1.55;
+}
+
+a {
+  color: #ff7ba2;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+a:hover {
   text-decoration: underline;
 }
 
-.privacy-consent-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-left: auto;
+/* ===============================
+   ALERTS
+================================ */
+
+.alert,
+.notice,
+.warning {
+  position: relative;
+  z-index: 2;
+  margin: 18px 0;
+  padding: 15px;
+  border-radius: 20px;
+  background: rgba(255, 77, 109, .08);
+  border: 1px solid rgba(255, 77, 109, .22);
+  color: var(--muted);
 }
 
-.privacy-consent-button {
-  border: none;
-  border-radius: 999px;
-  padding: 0.9rem 1.4rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.15s ease, background-color 0.15s ease;
+.success {
+  position: relative;
+  z-index: 2;
+  margin: 18px 0;
+  padding: 15px;
+  border-radius: 20px;
+  background: rgba(66, 230, 149, .08);
+  border: 1px solid rgba(66, 230, 149, .22);
+  color: rgba(255, 255, 255, .78);
 }
 
-.privacy-consent-button:hover {
-  transform: translateY(-1px);
-}
-
-.privacy-consent-button.accept {
-  background-color: #4caf50;
-  color: #ffffff;
-}
-
-.privacy-consent-button.decline {
-  background-color: #666666;
-  color: #ffffff;
-}
+/* ===============================
+   RESPONSIVE
+================================ */
 
 @media (max-width: 720px) {
-  .privacy-consent-banner {
-    flex-direction: column;
-    align-items: stretch;
+  .privacy-page,
+  .privacy-consent-page,
+  .consent-page,
+  main {
+    width: calc(100% - 18px);
+    padding: 18px 0 40px;
+    align-items: start;
   }
 
-  .privacy-consent-actions {
+  .privacy-card,
+  .consent-card,
+  .privacy-consent-card,
+  .card,
+  section {
+    padding: 22px;
+    border-radius: 28px;
+  }
+
+  .logo,
+  .brand,
+  .privacy-logo {
+    margin-left: 4px;
+    font-size: 2rem;
+  }
+
+  h1,
+  .privacy-title,
+  .consent-title {
+    font-size: 2.35rem;
+  }
+
+  .consent-option,
+  .privacy-option,
+  .option-card {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .actions,
+  .button-row,
+  .consent-actions,
+  .privacy-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  button,
+  .btn,
+  .primary-btn,
+  .secondary-btn,
+  .accept-btn,
+  .decline-btn,
+  .save-btn {
     width: 100%;
-    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 420px) {
+  h1,
+  .privacy-title,
+  .consent-title {
+    font-size: 2.05rem;
+  }
+
+  p,
+  li {
+    font-size: .94rem;
+  }
+
+  .privacy-card,
+  .consent-card,
+  .privacy-consent-card,
+  .card,
+  section {
+    padding: 18px;
   }
 }

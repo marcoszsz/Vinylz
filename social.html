@@ -1,237 +1,222 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vinyl - Social</title>
-  <link rel="stylesheet" href="social.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Vinyl — Social</title>
+
+  <link rel="stylesheet" href="social.css" />
+  <meta name="theme-color" content="#07070a" />
 </head>
+
 <body>
-  <div class="social-shell">
-    <aside class="left-rail" aria-label="Navegação principal">
-      <a href="home.html" class="rail-logo">VINYL</a>
 
-      <nav>
-        <a href="home.html">Home</a>
-        <a href="search.html">Catálogo</a>
-        <a href="timeline.html">Timeline</a>
-        <a href="messages.html">Mensagens</a>
-        <a href="social.html" aria-current="page">Social</a>
-        <a href="profile.html">Perfil</a>
-      </nav>
+  <div class="app-bg"></div>
 
-      <a href="#postText" class="rail-post-btn">Publicar</a>
+  <!-- NAVBAR -->
+  <header class="navbar">
 
-      <a href="profile.html" id="railProfile" class="rail-profile">
-        <img id="railProfileAvatar" src="" alt="">
-        <div>
-          <strong id="railProfileName">Vinyl</strong>
-          <span id="railProfileHandle">@vinyl</span>
-        </div>
+    <a href="home.html" class="logo">
+      VINYL
+    </a>
+
+    <nav class="navbar-links" id="navbarLinks">
+      <a href="home.html">Home</a>
+      <a href="search.html">Catálogo</a>
+      <a href="social.html" class="active">Social</a>
+      <a href="timeline.html">Timeline</a>
+      <a href="profile.html">Perfil</a>
+    </nav>
+
+    <div class="navbar-actions">
+
+      <a href="profile.html" class="navbar-profile">
+        <img
+          src="https://placehold.co/120x120/111111/ff4d6d?text=V"
+          alt="Avatar"
+          id="navbarAvatar"
+        />
+        <span id="navbarUsername">Perfil</span>
       </a>
-    </aside>
 
-    <main class="social-page">
-      <section class="social-header">
-        <div>
-          <span class="tag">Rede social musical</span>
-          <h1>Social</h1>
-          <p>Compartilhe músicas, imagens, vídeos, links do Spotify e descubra posts baseados no seu gosto.</p>
-        </div>
-      </section>
+      <button type="button" class="logout-btn" id="logoutBtn">
+        Sair
+      </button>
 
-    <section class="stories-panel" aria-label="Stories">
-      <div class="stories-header">
-        <div>
-          <h2>Stories</h2>
-          <p>Mostre o que está tocando agora. Stories ficam em destaque por 24h.</p>
-        </div>
-      </div>
+      <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menu">
+        ☰
+      </button>
 
-      <div class="story-composer">
-        <input
-          id="storyCaption"
-          type="text"
-          maxlength="80"
-          placeholder="Legenda curta para seu story..."
-        >
-
-        <label for="storyInput" class="story-media-btn">Escolher mídia</label>
-        <input id="storyInput" type="file" accept="image/*,video/*" hidden>
-
-        <button id="storyPostBtn" type="button" disabled>Publicar story</button>
-      </div>
-
-      <div id="storySelectedPreview" class="story-selected-preview"></div>
-
-      <div id="storiesList" class="stories-list" aria-live="polite">
-        <p class="message">Carregando stories...</p>
-      </div>
-    </section>
-
-    <section class="composer" aria-label="Criar publicação">
-      <textarea
-        id="postText"
-        maxlength="280"
-        placeholder="O que você está ouvindo agora?"
-      ></textarea>
-
-      <div class="composer-meta">
-        <span id="composerHint">Adicione texto, mídia ou um link do Spotify.</span>
-        <span id="charCounter">0/280</span>
-      </div>
-
-      <div id="composerMorePanel" class="composer-more-panel">
-        <input
-          id="spotifyUrlInput"
-          type="url"
-          placeholder="Cole um link do Spotify opcional..."
-        >
-
-        <div id="spotifyPreview" class="spotify-preview"></div>
-      </div>
-
-      <div id="mediaPreview" class="media-preview"></div>
-
-      <div class="composer-actions">
-        <div class="composer-more">
-          <button id="composerMoreBtn" class="composer-more-btn" type="button" aria-expanded="false" aria-controls="composerMoreMenu">+</button>
-
-          <div id="composerMoreMenu" class="composer-more-menu">
-            <label for="mediaInput" class="media-btn">Adicionar mídia</label>
-            <button id="spotifyOptionBtn" type="button">Link Spotify</button>
-          </div>
-        </div>
-
-        <input id="mediaInput" type="file" accept="image/*,video/*" hidden>
-
-        <button id="postBtn" type="button" disabled>Publicar</button>
-      </div>
-    </section>
-
-    <section class="feed-switcher" aria-label="Ordenação do feed">
-      <button type="button" class="feed-type active" data-feed="smart">Inteligente</button>
-      <button type="button" class="feed-type" data-feed="recent">Recentes</button>
-    </section>
-
-    <section class="feed-tabs" aria-label="Escopo do feed">
-      <button type="button" class="tab active" data-feed-scope="all">Para você</button>
-      <button type="button" class="tab" data-feed-scope="following">Seguindo</button>
-    </section>
-
-    <section id="feedList" class="feed-list" aria-live="polite">
-      <p class="message">Carregando feed...</p>
-    </section>
-
-      <section class="mobile-discovery" aria-label="Descoberta musical mobile">
-        <section class="sidebar-search">
-          <input id="mobileUserSearchInput" type="search" placeholder="Buscar usuários..." autocomplete="off">
-          <button id="mobileUserSearchBtn" type="button">Buscar</button>
-        </section>
-
-        <section id="mobileUserResults" class="user-results" aria-live="polite"></section>
-
-        <section class="side-card">
-          <h2>Tocando na comunidade</h2>
-          <div id="mobileTrendingList" class="trend-list">
-            <p class="side-message">Carregando tendências...</p>
-          </div>
-        </section>
-
-        <section class="side-card">
-          <h2>Quem seguir</h2>
-          <div id="mobileSuggestedUsers" class="suggested-users">
-            <p class="side-message">Buscando perfis...</p>
-          </div>
-        </section>
-
-        <section class="side-card">
-          <h2>Posts em alta</h2>
-          <div id="mobilePopularPosts" class="popular-posts">
-            <p class="side-message">Carregando posts...</p>
-          </div>
-        </section>
-      </section>
-    </main>
-
-    <aside class="right-panel" aria-label="Descoberta musical">
-      <section class="sidebar-search">
-        <input id="userSearchInput" type="search" placeholder="Buscar usuários..." autocomplete="off">
-        <button id="userSearchBtn" type="button">Buscar</button>
-      </section>
-
-      <section id="userResults" class="user-results" aria-live="polite"></section>
-
-      <section class="side-card">
-        <h2>Tocando na comunidade</h2>
-        <div id="trendingList" class="trend-list">
-          <p class="side-message">Carregando tendências...</p>
-        </div>
-      </section>
-
-      <section class="side-card">
-        <h2>Quem seguir</h2>
-        <div id="suggestedUsers" class="suggested-users">
-          <p class="side-message">Buscando perfis...</p>
-        </div>
-      </section>
-
-      <section class="side-card">
-        <h2>Posts em alta</h2>
-        <div id="popularPosts" class="popular-posts">
-          <p class="side-message">Carregando posts...</p>
-        </div>
-      </section>
-    </aside>
-  </div>
-
-  <nav class="mobile-nav" aria-label="Navegação mobile">
-    <a href="home.html">
-      <span aria-hidden="true">⌂</span>
-      <p>Home</p>
-    </a>
-
-    <a href="search.html">
-      <span aria-hidden="true">♪</span>
-      <p>Buscar</p>
-    </a>
-
-    <a href="social.html" aria-current="page">
-      <span aria-hidden="true">+</span>
-      <p>Social</p>
-    </a>
-
-    <a href="messages.html">
-      <span aria-hidden="true">✉</span>
-      <p>Msgs</p>
-    </a>
-
-    <a href="profile.html">
-      <span aria-hidden="true">●</span>
-      <p>Perfil</p>
-    </a>
-  </nav>
-
-  <div id="storyViewer" class="story-viewer" aria-hidden="true">
-    <div class="story-viewer-card" role="dialog" aria-modal="true" aria-label="Story">
-      <button id="closeStoryViewer" type="button" class="story-close-btn" aria-label="Fechar story">×</button>
-
-      <div id="storyViewerMedia" class="story-viewer-media"></div>
-
-      <div class="story-viewer-info">
-        <img id="storyViewerAvatar" src="" alt="">
-
-        <div>
-          <strong id="storyViewerName"></strong>
-          <p id="storyViewerCaption"></p>
-        </div>
-      </div>
-
-      <button id="deleteStoryBtn" type="button" class="delete-story-btn">Excluir story</button>
     </div>
+
+  </header>
+
+  <main class="social-page">
+
+    <!-- HERO -->
+    <section class="social-hero">
+
+      <div class="hero-content">
+        <span class="eyebrow">Comunidade Vinyl</span>
+
+        <h1>
+          Veja o que a galera está
+          <span>ouvindo agora.</span>
+        </h1>
+
+        <p>
+          Descubra posts, reviews, links do Spotify, usuários em destaque e conversas musicais da comunidade.
+        </p>
+
+        <div class="hero-actions">
+          <a href="timeline.html" class="hero-primary">Abrir timeline</a>
+          <a href="search.html" class="hero-secondary">Explorar catálogo</a>
+        </div>
+      </div>
+
+      <div class="hero-orb" aria-hidden="true">
+        <div class="vinyl-disc"></div>
+      </div>
+
+    </section>
+
+    <div class="social-layout">
+
+      <!-- COLUNA PRINCIPAL -->
+      <section class="main-column">
+
+        <!-- POSTS EM ALTA -->
+        <section class="social-card trending-posts-card">
+
+          <div class="section-header">
+            <div>
+              <h2>Posts em alta</h2>
+              <p>Posts populares e recentes da comunidade Vinyl.</p>
+            </div>
+
+            <a href="timeline.html" class="see-all-link">
+              Ver timeline
+            </a>
+          </div>
+
+          <div class="trending-posts-list" id="trendingPostsList">
+            <p class="empty-state">Carregando posts em alta...</p>
+          </div>
+
+        </section>
+
+        <!-- REVIEWS EM DESTAQUE -->
+        <section class="social-card reviews-card">
+
+          <div class="section-header">
+            <div>
+              <h2>Reviews em destaque</h2>
+              <p>Opiniões musicais que podem virar conversa.</p>
+            </div>
+
+            <a href="timeline.html" class="see-all-link">
+              Ver reviews
+            </a>
+          </div>
+
+          <div class="reviews-list" id="reviewsList">
+            <p class="empty-state">Carregando reviews...</p>
+          </div>
+
+        </section>
+
+      </section>
+
+      <!-- SIDEBAR -->
+      <aside class="social-sidebar">
+
+        <section class="social-card profile-mini-card">
+
+          <img
+            src="https://placehold.co/240x240/111111/ff4d6d?text=V"
+            alt="Avatar"
+            id="sidebarAvatar"
+          />
+
+          <h3 id="sidebarName">Carregando...</h3>
+          <p id="sidebarUsername">@usuario</p>
+
+          <a href="profile.html">
+            Ver meu perfil
+          </a>
+
+        </section>
+
+        <section class="social-card">
+
+          <div class="section-header small">
+            <div>
+              <h2>Sugestões</h2>
+              <p>Perfis para conhecer.</p>
+            </div>
+          </div>
+
+          <div class="suggestions-list" id="suggestionsList">
+            <p class="empty-state">Carregando sugestões...</p>
+          </div>
+
+        </section>
+
+        <section class="social-card">
+
+          <div class="section-header small">
+            <div>
+              <h2>Atividade recente</h2>
+              <p>Movimentos da comunidade.</p>
+            </div>
+          </div>
+
+          <div class="activity-list" id="activityList">
+            <p class="empty-state">Carregando atividade...</p>
+          </div>
+
+        </section>
+
+        <section class="social-card tip-card">
+          <span>💬</span>
+          <h3>Entre na conversa</h3>
+          <p>
+            Clique em qualquer post em alta para abrir na timeline, responder, curtir ou republicar.
+          </p>
+        </section>
+
+      </aside>
+
+    </div>
+
+  </main>
+
+  <!-- MODAL DE POST -->
+  <div class="post-modal" id="postModal" hidden>
+
+    <div class="post-modal-backdrop" id="closePostModalBackdrop"></div>
+
+    <section class="post-modal-card">
+
+      <button type="button" class="modal-close-btn" id="closePostModalBtn">
+        ×
+      </button>
+
+      <article id="postModalContent">
+        <p class="empty-state">Carregando post...</p>
+      </article>
+
+    </section>
+
   </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
 
   <script type="module" src="social.js"></script>
-  <script type="module" src="protect.js"></script>
+
 </body>
+
 </html>
