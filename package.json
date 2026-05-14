@@ -2,6 +2,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.1",
-    "firebase": "^12.12.1"
+    "firebase": "^12.12.1",
+    "vercel": "^54.0.0"
   }
 }
