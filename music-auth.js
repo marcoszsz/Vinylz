@@ -15,7 +15,7 @@ const statusBox = document.getElementById("statusBox");
   https://vinylsz.vercel.app/spotify-callback.html
 */
 
-const SPOTIFY_CLIENT_ID = "COLOQUE_SEU_SPOTIFY_CLIENT_ID_AQUI";
+const SPOTIFY_CLIENT_ID = "${SPOTIFY_CLIENT_ID}";
 const SPOTIFY_REDIRECT_URI = `${window.location.origin}/spotify-callback.html`;
 
 const SPOTIFY_SCOPES = [

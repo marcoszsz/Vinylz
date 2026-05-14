@@ -9,6 +9,13 @@
 
   <link rel="stylesheet" href="profile.css" />
   <meta name="theme-color" content="#09090d" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
 </head>
 
 <body>
@@ -17,12 +24,16 @@
 
   <!-- NAVBAR -->
   <header class="navbar">
-    <a href="home.html" class="logo">VINYL</a>
+    <a href="home.html" class="logo">
+      <span></span>
+      VINYL
+    </a>
 
     <nav id="navbarLinks" class="navbar-links">
       <a href="home.html">Home</a>
       <a href="search.html">Catálogo</a>
       <a href="timeline.html">Timeline</a>
+      <a href="favorites.html">Favoritos</a>
       <a href="profile.html" class="active">Perfil</a>
     </nav>
 
@@ -44,6 +55,7 @@
     <section class="profile-hero">
 
       <div class="profile-banner" id="profileBanner">
+        <div class="banner-glow"></div>
         <div class="banner-overlay"></div>
 
         <button class="change-banner-btn" id="changeBannerBtn" type="button">
@@ -53,17 +65,27 @@
 
       <div class="profile-main-info">
 
-        <div class="profile-avatar-wrap">
-          <img
-            src="https://placehold.co/300x300/111111/ff4d6d?text=VINYL"
-            alt="Foto de perfil"
-            class="profile-avatar"
-            id="profileAvatar"
-          />
+        <div class="profile-avatar-area">
+          <div class="profile-avatar-wrap">
+            <img
+              src="https://placehold.co/300x300/111111/ff4d6d?text=VINYL"
+              alt="Foto de perfil"
+              class="profile-avatar"
+              id="profileAvatar"
+            />
+          </div>
+
+          <div class="profile-level-card">
+            <span>Nível Vinyl</span>
+            <strong>Listener</strong>
+          </div>
         </div>
 
         <div class="profile-info">
-          <span class="profile-tag">Perfil musical</span>
+          <div class="profile-topline">
+            <span class="profile-tag">Perfil musical</span>
+            <span class="profile-status-dot">Online</span>
+          </div>
 
           <h1 id="profileDisplayName">
             Usuário Vinyl
@@ -105,12 +127,55 @@
               Favoritos
             </button>
 
-            <button class="secondary-btn" id="shareProfileBtn" type="button">
+            <a class="secondary-btn link-btn" href="music-auth.html">
+              Conectar música
+            </a>
+
+            <button class="ghost-btn" id="shareProfileBtn" type="button">
               Compartilhar
             </button>
           </div>
         </div>
 
+      </div>
+    </section>
+
+    <!-- MUSIC CONNECTION -->
+    <section class="connect-music-section">
+      <div class="connect-music-card">
+        <div class="connect-music-info">
+          <span class="profile-tag">Integração musical</span>
+
+          <h2>Conecte sua plataforma favorita</h2>
+
+          <p>
+            Use Spotify ou Apple Music para personalizar recomendações,
+            favoritos, compatibilidade musical e sua identidade no Vinyl.
+          </p>
+
+          <div class="connected-provider" id="connectedProviderBox">
+            <span class="provider-dot"></span>
+            <strong id="connectedProviderText">Nenhuma plataforma conectada</strong>
+          </div>
+        </div>
+
+        <div class="platform-mini-grid">
+          <a href="music-auth.html" class="mini-platform-card spotify-mini">
+            <div>
+              <strong>Spotify</strong>
+              <span>Conectar conta</span>
+            </div>
+            <b>→</b>
+          </a>
+
+          <a href="music-auth.html" class="mini-platform-card apple-mini">
+            <div>
+              <strong>Apple Music</strong>
+              <span>Em breve</span>
+            </div>
+            <b>→</b>
+          </a>
+        </div>
       </div>
     </section>
 
@@ -601,6 +666,7 @@
   <div id="toast" class="toast"></div>
 
   <script type="module" src="profile.js"></script>
+
 </body>
 
 </html>
