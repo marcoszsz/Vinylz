@@ -39,3 +39,7 @@ O objetivo do projeto é criar um espaço social moderno, visualmente premium e 
 - Spotify Web API
 - Vercel
 - GitHub
+
+---
+
+Deploy de produção: 2026-05-24.
