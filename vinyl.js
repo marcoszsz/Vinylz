@@ -6,9 +6,6 @@ const spotifyInput = document.getElementById("spotifyInput");
 const spotifySearchBtn = document.getElementById("spotifySearchBtn");
 const spotifyResults = document.getElementById("spotifyResults");
 
-// Troque pelo seu token do Spotify
-const SPOTIFY_TOKEN = "9be72c2e30f543f4964ab77b20a72449";
-
 startBtn.addEventListener("click", () => {
   document.querySelector("#spotify").scrollIntoView({
     behavior: "smooth"
@@ -37,7 +34,7 @@ async function searchSpotify() {
   const query = spotifyInput.value.trim();
 
   if (!query) {
-    spotifyResults.innerHTML = `<p class="message">Digite uma música, álbum ou artista.</p>`;
+    spotifyResults.innerHTML = `<p class="message">Digite uma musica, album ou artista.</p>`;
     return;
   }
 
@@ -45,12 +42,7 @@ async function searchSpotify() {
 
   try {
     const response = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album,track&limit=8`,
-      {
-        headers: {
-          Authorization: `Bearer ${SPOTIFY_TOKEN}`
-        }
-      }
+      `/api/searchSpotify?query=${encodeURIComponent(query)}&type=album,track`
     );
 
     if (!response.ok) {
@@ -64,14 +56,14 @@ async function searchSpotify() {
 
     const items = [
       ...albums.map((album) => ({
-        type: "Álbum",
+        type: "Album",
         title: album.name,
         artist: album.artists.map((artist) => artist.name).join(", "),
         image: album.images?.[0]?.url,
         url: album.external_urls.spotify
       })),
       ...tracks.map((track) => ({
-        type: "Música",
+        type: "Musica",
         title: track.name,
         artist: track.artists.map((artist) => artist.name).join(", "),
         image: track.album?.images?.[0]?.url,
@@ -84,7 +76,7 @@ async function searchSpotify() {
     console.error(error);
     spotifyResults.innerHTML = `
       <p class="message">
-        Erro ao buscar no Spotify. Verifique se o token está correto.
+        Erro ao buscar no Spotify. Tente novamente em instantes.
       </p>
     `;
   }
@@ -103,15 +95,24 @@ function renderSpotifyResults(items) {
     card.classList.add("spotify-card");
 
     card.innerHTML = `
-      <img src="${item.image || ""}" alt="${item.title}">
-      <h3>${item.title}</h3>
-      <p>${item.artist}</p>
-      <p>${item.type}</p>
-      <a href="${item.url}" target="_blank">Abrir no Spotify</a>
+      <img src="${escapeHTML(item.image || "")}" alt="${escapeHTML(item.title)}">
+      <h3>${escapeHTML(item.title)}</h3>
+      <p>${escapeHTML(item.artist)}</p>
+      <p>${escapeHTML(item.type)}</p>
+      <a href="${escapeHTML(item.url)}" target="_blank" rel="noopener noreferrer">Abrir no Spotify</a>
     `;
 
     spotifyResults.appendChild(card);
   });
+}
+
+function escapeHTML(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 const revealElements = document.querySelectorAll(".feature-card, .cta, .spotify-search");
