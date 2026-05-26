@@ -1,4 +1,16 @@
 {
+  "name": "vinyl",
+  "version": "1.0.0",
+  "description": "VINYL — rede social musical",
+  "main": "electron/main.js",
+  "author": "buggyz",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "build": "electron-builder --win",
+    "build:portable": "electron-builder --win portable"
+  },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.1",

@@ -167,10 +167,19 @@ service cloud.firestore {
 
     /* USERNAMES */
     match /usernames/{username} {
-      allow read: if signedIn();
+      allow read: if true;
 
       allow create, update: if signedIn()
-        && request.resource.data.uid == request.auth.uid;
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.usernameLower == username
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'username',
+          'usernameLower',
+          'authEmail',
+          'createdAt',
+          'updatedAt'
+        ]);
 
       allow delete: if signedIn()
         && resource.data.uid == request.auth.uid;
@@ -206,7 +215,28 @@ service cloud.firestore {
     match /posts/{postId} {
       allow read: if signedIn();
       allow create: if ownsNewDoc();
-      allow update: if ownsCurrentDoc();
+      allow update: if ownsCurrentDoc()
+        || (
+          signedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount'])
+          && (
+            request.resource.data.likesCount == resource.data.likesCount + 1 ||
+            request.resource.data.likesCount == resource.data.likesCount - 1
+          )
+        )
+        || (
+          signedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['repostsCount'])
+          && (
+            request.resource.data.repostsCount == resource.data.repostsCount + 1 ||
+            request.resource.data.repostsCount == resource.data.repostsCount - 1
+          )
+        )
+        || (
+          signedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['repliesCount'])
+          && request.resource.data.repliesCount == resource.data.repliesCount + 1
+        );
       allow delete: if ownsCurrentDoc();
 
       match /comments/{commentId} {
@@ -217,10 +247,39 @@ service cloud.firestore {
 
       match /likes/{likeId} {
         allow read: if signedIn();
-        allow create: if signedIn();
-        allow delete: if signedIn();
+        allow create: if signedIn()
+          && likeId == request.auth.uid
+          && request.resource.data.userId == request.auth.uid;
+        allow delete: if signedIn()
+          && likeId == request.auth.uid
+          && resource.data.userId == request.auth.uid;
         allow update: if false;
       }
+
+      match /reposts/{repostId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && repostId == request.auth.uid
+          && request.resource.data.userId == request.auth.uid;
+        allow delete: if signedIn()
+          && repostId == request.auth.uid
+          && resource.data.userId == request.auth.uid;
+        allow update: if false;
+      }
+
+      match /replies/{replyId} {
+        allow read: if signedIn();
+        allow create: if ownsNewDoc()
+          && request.resource.data.keys().hasOnly([
+            'userId',
+            'userName',
+            'userUsername',
+            'text',
+            'createdAt'
+          ]);
+        allow update, delete: if ownsCurrentDoc();
+      }
+
     }
 
     /* COMMENTS GLOBAL */
@@ -255,7 +314,21 @@ service cloud.firestore {
     match /stories/{storyId} {
       allow read: if signedIn();
       allow create: if ownsNewDoc();
-      allow update, delete: if ownsCurrentDoc();
+      allow update: if ownsCurrentDoc()
+        || (
+          signedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewsCount'])
+          && request.resource.data.viewsCount == resource.data.viewsCount + 1
+        );
+      allow delete: if ownsCurrentDoc();
+
+      match /views/{viewId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && viewId == request.auth.uid
+          && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if false;
+      }
     }
 
     /* REVIEWS GLOBAL */
@@ -437,6 +510,30 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow create: if signedIn();
       allow read, update, delete: if false;
+    }
+
+    /* SEARCH STATS */
+    match /searchStats/{statId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'term',
+          'termLower',
+          'type',
+          'count',
+          'updatedAt',
+          'lastUserId'
+        ])
+        && request.resource.data.lastUserId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    /* ACTIVITIES */
+    match /activities/{activityId} {
+      allow read: if signedIn()
+        && resource.data.userId == request.auth.uid;
+      allow create: if ownsNewDoc();
+      allow update, delete: if ownsCurrentDoc();
     }
 
     /* DEFAULT BLOCK */

@@ -342,23 +342,26 @@ function renderHero() {
 
   if (!latest) return;
 
+  const image = safeExternalUrl(latest.image);
+  const url = safeExternalUrl(latest.url);
+
   if (heroBlur) {
-    heroBlur.style.backgroundImage = `url("${latest.image}")`;
+    heroBlur.style.backgroundImage = `url("${image}")`;
   }
 
   nowCard.innerHTML = `
-    <img src="${latest.image}" alt="${latest.name}">
+    <img src="${image}" alt="${escapeHTML(latest.name)}">
 
     <span>Última música</span>
 
-    <h2>${latest.name}</h2>
+    <h2>${escapeHTML(latest.name)}</h2>
 
-    <p>${latest.artist}</p>
+    <p>${escapeHTML(latest.artist)}</p>
 
-    <p>${timeAgo(latest.playedAt)}</p>
+    <p>${escapeHTML(timeAgo(latest.playedAt))}</p>
 
     <div class="now-actions">
-      <a href="${latest.url}" target="_blank">
+      <a href="${url}" target="_blank" rel="noopener noreferrer">
         Abrir Spotify
       </a>
     </div>
@@ -524,28 +527,30 @@ function renderTimeline(tracks) {
     group.className = "day-group";
 
     group.innerHTML = `
-      <h3 class="day-title">${day}</h3>
+      <h3 class="day-title">${escapeHTML(day)}</h3>
     `;
 
     items.forEach((track) => {
       const card = document.createElement("article");
+      const image = safeExternalUrl(track.image);
+      const url = safeExternalUrl(track.url);
 
       card.className = "track-card";
 
       card.innerHTML = `
-        <img src="${track.image}" alt="${track.name}">
+        <img src="${image}" alt="${escapeHTML(track.name)}">
 
         <div class="track-info">
-          <h3>${track.name}</h3>
-          <p>${track.artist}</p>
-          <p>${track.album}</p>
+          <h3>${escapeHTML(track.name)}</h3>
+          <p>${escapeHTML(track.artist)}</p>
+          <p>${escapeHTML(track.album)}</p>
         </div>
 
         <span class="track-time">
-          ${timeAgo(track.playedAt)}
+          ${escapeHTML(timeAgo(track.playedAt))}
         </span>
 
-        <a href="${track.url}" target="_blank" class="spotify-btn">
+        <a href="${url}" target="_blank" rel="noopener noreferrer" class="spotify-btn">
           Spotify
         </a>
       `;
@@ -617,7 +622,7 @@ function renderTopArtists() {
       </div>
 
       <div>
-        <strong>${artist}</strong>
+        <strong>${escapeHTML(artist)}</strong>
         <span>${count} músicas</span>
       </div>
 
@@ -686,4 +691,27 @@ function timeAgo(dateString) {
     hour: "2-digit",
     minute: "2-digit"
   });
+}
+
+function escapeHTML(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function safeExternalUrl(value) {
+  try {
+    const url = new URL(value);
+
+    if (url.protocol === "https:" || url.protocol === "http:") {
+      return url.href;
+    }
+  } catch {
+    return "#";
+  }
+
+  return "#";
 }

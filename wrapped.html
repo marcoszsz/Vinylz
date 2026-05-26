@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>VINYL — Wrapped</title>
+
+  <link rel="stylesheet" href="wrapped.css" />
+  <meta name="theme-color" content="#0b0b0d" />
+</head>
+
+<body>
+
+  <div class="app-bg"></div>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+
+    <a href="home.html" class="logo" aria-label="Ir para home">
+      VINYL
+    </a>
+
+    <nav class="navbar-links" id="navbarLinks">
+      <a href="home.html">Home</a>
+      <a href="search.html">Catálogo</a>
+      <a href="timeline.html">Timeline</a>
+      <a href="profile.html">Perfil</a>
+      <a href="wrapped.html" class="active">Wrapped</a>
+    </nav>
+
+    <div class="navbar-actions">
+
+      <a href="profile.html" class="navbar-profile">
+        <img
+          src="https://placehold.co/120x120/111111/ff4d6d?text=V"
+          alt="Avatar"
+          id="navbarAvatar"
+        />
+        <span id="navbarUsername">Perfil</span>
+      </a>
+
+      <button type="button" class="logout-btn" id="logoutBtn">
+        Sair
+      </button>
+
+      <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menu">
+        ☰
+      </button>
+
+    </div>
+
+  </header>
+
+  <!-- WRAPPED -->
+  <main class="wrapped-page">
+
+    <!-- LOADING -->
+    <section class="wrapped-loading" id="wrappedLoading">
+      <div class="loading-vinyl"></div>
+
+      <h1>Preparando seu Vinyl Wrapped...</h1>
+      <p>Estamos lendo sua vibe musical, seus posts, favoritos, reviews e dados do Spotify.</p>
+    </section>
+
+    <!-- EMPTY -->
+    <section class="wrapped-empty" id="wrappedEmpty" hidden>
+      <span class="empty-icon">💿</span>
+
+      <h1>Seu Wrapped ainda está vazio</h1>
+
+      <p>
+        Conecte seu Spotify ou poste músicas, favorite artistas e faça reviews para gerar seu resumo musical.
+      </p>
+
+      <div class="empty-actions">
+        <a href="search.html">Explorar catálogo</a>
+        <a href="home.html">Criar post</a>
+      </div>
+    </section>
+
+    <!-- INTRO -->
+    <section class="wrapped-intro" id="wrappedIntro" hidden>
+
+      <div class="wrapped-orb wrapped-orb-one"></div>
+      <div class="wrapped-orb wrapped-orb-two"></div>
+
+      <div class="intro-card">
+
+        <span class="intro-eyebrow">VINYL WRAPPED</span>
+
+        <h1>
+          Seu ano em
+          <span>música.</span>
+        </h1>
+
+        <p>
+          Uma retrospectiva da sua vibe, seus artistas, posts, reviews, favoritos e dados do Spotify.
+        </p>
+
+        <div class="intro-user">
+          <img
+            src="https://placehold.co/200x200/111111/ff4d6d?text=V"
+            alt="Avatar"
+            id="introAvatar"
+          />
+
+          <div>
+            <strong id="introName">Usuário Vinyl</strong>
+            <span id="introUsername">@usuario</span>
+          </div>
+        </div>
+
+        <button type="button" id="startWrappedBtn">
+          Começar Wrapped
+        </button>
+
+      </div>
+
+    </section>
+
+    <!-- PLAYER / SLIDES -->
+    <section class="wrapped-player" id="wrappedPlayer" hidden>
+
+      <div class="wrapped-topbar">
+
+        <button type="button" id="exitWrappedBtn" aria-label="Sair do Wrapped">
+          ×
+        </button>
+
+        <div class="progress-track">
+          <span class="progress-bar" id="wrappedProgressBar"></span>
+        </div>
+
+        <span id="slideCounter">1/8</span>
+
+      </div>
+
+      <div class="slides-wrapper">
+
+        <!-- SLIDE 1 -->
+        <article class="wrapped-slide active" data-slide="0">
+
+          <div class="slide-content center-content">
+            <span class="slide-kicker">VINYL WRAPPED</span>
+
+            <h2>
+              Esse foi o seu
+              <span>resumo musical.</span>
+            </h2>
+
+            <p>
+              Cada música, artista, post, favorito e review ajudou a montar sua identidade musical.
+            </p>
+
+            <div class="big-year" id="wrappedYear">2026</div>
+          </div>
+
+        </article>
+
+        <!-- SLIDE 2 -->
+        <article class="wrapped-slide" data-slide="1">
+
+          <div class="slide-content">
+
+            <span class="slide-kicker">ATIVIDADE</span>
+
+            <h2>
+              Você viveu música
+              <span>intensamente.</span>
+            </h2>
+
+            <div class="stats-grid">
+
+              <div class="stat-card">
+                <strong id="postsCount">0</strong>
+                <span>posts</span>
+              </div>
+
+              <div class="stat-card">
+                <strong id="reviewsCount">0</strong>
+                <span>reviews</span>
+              </div>
+
+              <div class="stat-card">
+                <strong id="favoritesCount">0</strong>
+                <span>favoritos</span>
+              </div>
+
+              <div class="stat-card">
+                <strong id="storiesCount">0</strong>
+                <span>stories</span>
+              </div>
+
+            </div>
+
+          </div>
+
+        </article>
+
+        <!-- SLIDE 3 -->
+        <article class="wrapped-slide" data-slide="2">
+
+          <div class="slide-content artist-slide">
+
+            <span class="slide-kicker">TOP ARTISTA</span>
+
+            <h2>
+              Seu artista mais presente foi
+              <span id="topArtistName">SZA</span>
+            </h2>
+
+            <div class="artist-feature-card">
+
+              <img
+                src="https://placehold.co/400x400/111111/ff4d6d?text=ARTISTA"
+                alt="Artista mais citado"
+                id="topArtistImage"
+              />
+
+              <div>
+                <strong id="topArtistTitle">SZA</strong>
+                <p>
+                  Destaque em
+                  <span id="topArtistCount">0</span>
+                  no seu Wrapped.
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </article>
+
+        <!-- SLIDE 4 -->
+        <article class="wrapped-slide" data-slide="3">
+
+          <div class="slide-content album-slide">
+
+            <span class="slide-kicker">TOP ÁLBUM / FAIXA</span>
+
+            <h2>
+              O som que marcou sua fase foi
+              <span id="topAlbumName">SOS</span>
+            </h2>
+
+            <div class="album-cover-wrap">
+              <img
+                src="https://placehold.co/500x500/111111/ff4d6d?text=ALBUM"
+                alt="Álbum ou faixa em destaque"
+                id="topAlbumImage"
+              />
+            </div>
+
+            <p id="topAlbumSubtitle">SZA</p>
+
+          </div>
+
+        </article>
+
+        <!-- SLIDE 5 -->
+        <article class="wrapped-slide" data-slide="4">
+
+          <div class="slide-content vibe-slide">
+
+            <span class="slide-kicker">SUA VIBE</span>
+
+            <h2>
+              Sua vibe no Vinyl foi:
+            </h2>
+
+            <div class="vibe-card">
+              <strong id="vibeTitle">R&B Noturno</strong>
+              <p id="vibePhrase">
+                Madrugada, R&B e pensamentos profundos.
+              </p>
+            </div>
+
+            <div class="genre-pills" id="genrePills">
+              <span>R&B</span>
+              <span>Pop</span>
+              <span>Hip Hop</span>
+            </div>
+
+          </div>
+
+        </article>
+
+        <!-- SLIDE 6 -->
+        <article class="wrapped-slide" data-slide="5">
+
+          <div class="slide-content social-slide">
+
+            <span class="slide-kicker">SOCIAL</span>
+
+            <h2>
+              Sua comunidade sentiu
+              <span>sua presença.</span>
+            </h2>
+
+            <div class="social-stats">
+
+              <div>
+                <strong id="likesReceivedCount">0</strong>
+                <span>curtidas recebidas</span>
+              </div>
+
+              <div>
+                <strong id="repliesReceivedCount">0</strong>
+                <span>respostas</span>
+              </div>
+
+              <div>
+                <strong id="repostsReceivedCount">0</strong>
+                <span>reposts</span>
+              </div>
+
+            </div>
+
+          </div>
+
+        </article>
+
+        <!-- SLIDE 7 -->
+        <article class="wrapped-slide" data-slide="6">
+
+          <div class="slide-content ranking-slide">
+
+            <span class="slide-kicker">SEU TOP 5</span>
+
+            <h2>
+              Os nomes que dominaram
+              <span>seu Vinyl.</span>
+            </h2>
+
+            <ol class="top-ranking" id="topRanking">
+              <li>
+                <span>1</span>
+                <strong>SZA</strong>
+                <small>9 interações</small>
+              </li>
+
+              <li>
+                <span>2</span>
+                <strong>The Weeknd</strong>
+                <small>7 interações</small>
+              </li>
+
+              <li>
+                <span>3</span>
+                <strong>Frank Ocean</strong>
+                <small>5 interações</small>
+              </li>
+            </ol>
+
+          </div>
+
+        </article>
+
+        <!-- SLIDE 8 -->
+        <article class="wrapped-slide" data-slide="7">
+
+          <div class="slide-content share-slide">
+
+            <span class="slide-kicker">COMPARTILHAR</span>
+
+            <h2>
+              Mostre sua vibe
+              <span>para o mundo.</span>
+            </h2>
+
+            <div class="share-card" id="shareCard">
+
+              <span>VINYL WRAPPED</span>
+
+              <img
+                src="https://placehold.co/200x200/111111/ff4d6d?text=V"
+                alt="Avatar"
+                id="shareAvatar"
+              />
+
+              <h3 id="shareUsername">@usuario</h3>
+
+              <p id="shareVibe">R&B Noturno</p>
+
+              <div class="share-mini-stats">
+                <div>
+                  <strong id="sharePosts">0</strong>
+                  <span>posts</span>
+                </div>
+
+                <div>
+                  <strong id="shareFavorites">0</strong>
+                  <span>favoritos</span>
+                </div>
+
+                <div>
+                  <strong id="shareTopArtist">SZA</strong>
+                  <span>top artista</span>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="share-actions">
+              <button type="button" id="downloadWrappedBtn">
+                Baixar imagem
+              </button>
+
+              <button type="button" id="postWrappedBtn">
+                Postar no Vinyl
+              </button>
+
+              <button type="button" id="copyWrappedBtn">
+                Copiar link
+              </button>
+            </div>
+
+          </div>
+
+        </article>
+
+      </div>
+
+      <div class="wrapped-controls">
+
+        <button type="button" id="prevSlideBtn">
+          Anterior
+        </button>
+
+        <button type="button" id="nextSlideBtn">
+          Próximo
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="wrapped.js"></script>
+
+</body>
+
+</html>

@@ -1,8 +1,6 @@
 import { auth, db } from "./firebase.js";
 
-import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
   collection,
@@ -18,38 +16,81 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* =========================
-   ELEMENTOS
-========================= */
+const navbarLinks = document.getElementById("navbarLinks");
+const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const navbarAvatar = document.getElementById("navbarAvatar");
+const navbarUsername = document.getElementById("navbarUsername");
 
 const notificationsList = document.getElementById("notificationsList");
 const miniNotificationsList = document.getElementById("miniNotificationsList");
 const notificationBadge = document.getElementById("notificationBadge");
 const notificationTabs = document.querySelectorAll("[data-notification-filter]");
+const filterLabel = document.getElementById("filterLabel");
+const totalNotificationsCount = document.getElementById("totalNotificationsCount");
+const unreadNotificationsCount = document.getElementById("unreadNotificationsCount");
+const requestNotificationsCount = document.getElementById("requestNotificationsCount");
 const toast = document.getElementById("toast");
 
 const DEFAULT_AVATAR = "https://placehold.co/120x120/111111/ff4d6d?text=V";
+const filterNames = {
+  all: "Todas",
+  follow_request: "Pedidos",
+  unread: "Nao lidas"
+};
 
 let currentUser = null;
 let allNotifications = [];
 let currentFilter = "all";
+let unsubscribeNotifications = null;
+const userCache = new Map();
 
-/* =========================
-   AUTH
-========================= */
+mobileMenuBtn?.addEventListener("click", () => {
+  navbarLinks?.classList.toggle("open");
+});
 
-onAuthStateChanged(auth, (user) => {
-  if (!user) return;
+logoutBtn?.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    window.location.href = "login.html";
+  } catch (error) {
+    console.error(error);
+    showMessage("Nao foi possivel sair agora.");
+  }
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
 
   currentUser = user;
+  await renderCurrentUser(user);
   listenNotifications(user.uid);
 });
 
-/* =========================
-   LISTENER
-========================= */
+async function renderCurrentUser(user) {
+  try {
+    const userSnap = await getDoc(doc(db, "users", user.uid));
+    const data = userSnap.exists() ? userSnap.data() : {};
+
+    const avatar = data.photoURL || data.avatar || user.photoURL || DEFAULT_AVATAR;
+    const username = data.username || user.email?.split("@")[0] || "perfil";
+
+    if (navbarAvatar) navbarAvatar.src = avatar;
+    if (navbarUsername) navbarUsername.textContent = username;
+  } catch (error) {
+    console.warn("Erro ao carregar usuario:", error);
+  }
+}
 
 function listenNotifications(uid) {
+  if (unsubscribeNotifications) {
+    unsubscribeNotifications();
+    unsubscribeNotifications = null;
+  }
+
   const notificationsQuery = query(
     collection(db, "notifications"),
     where("toUserId", "==", uid),
@@ -57,62 +98,39 @@ function listenNotifications(uid) {
     limit(50)
   );
 
-  onSnapshot(
+  unsubscribeNotifications = onSnapshot(
     notificationsQuery,
     async (snapshot) => {
-      allNotifications = [];
+      allNotifications = snapshot.docs.map((notificationDoc) => ({
+        id: notificationDoc.id,
+        ...notificationDoc.data()
+      }));
 
-      for (const notificationDoc of snapshot.docs) {
-        allNotifications.push({
-          id: notificationDoc.id,
-          ...notificationDoc.data()
-        });
-      }
-
-      updateBadge();
+      updateSummary();
       await renderNotifications();
       await renderMiniNotifications();
     },
     (error) => {
-      console.error("Erro ao carregar notificações:", error);
-
-      if (notificationsList) {
-        notificationsList.innerHTML = `
-          <p class="empty-state">Erro ao carregar notificações.</p>
-        `;
-      }
-
-      if (miniNotificationsList) {
-        miniNotificationsList.innerHTML = `
-          <p class="empty-state">Erro ao carregar.</p>
-        `;
-      }
+      console.error("Erro ao carregar notificacoes:", error);
+      renderErrorState();
     }
   );
 }
 
-/* =========================
-   BADGE
-========================= */
+function updateSummary() {
+  const unreadCount = allNotifications.filter((item) => !item.read).length;
+  const requestCount = allNotifications.filter((item) => item.type === "follow_request").length;
 
-function updateBadge() {
+  if (totalNotificationsCount) totalNotificationsCount.textContent = String(allNotifications.length);
+  if (unreadNotificationsCount) unreadNotificationsCount.textContent = String(unreadCount);
+  if (requestNotificationsCount) requestNotificationsCount.textContent = String(requestCount);
+  if (filterLabel) filterLabel.textContent = filterNames[currentFilter] || "Todas";
+
   if (!notificationBadge) return;
 
-  const unreadCount = allNotifications.filter((item) => !item.read).length;
-
-  if (unreadCount <= 0) {
-    notificationBadge.hidden = true;
-    notificationBadge.textContent = "0";
-    return;
-  }
-
-  notificationBadge.hidden = false;
+  notificationBadge.hidden = unreadCount === 0;
   notificationBadge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
 }
-
-/* =========================
-   FILTROS
-========================= */
 
 notificationTabs.forEach((tab) => {
   tab.addEventListener("click", async () => {
@@ -121,6 +139,7 @@ notificationTabs.forEach((tab) => {
     tab.classList.add("active");
     currentFilter = tab.dataset.notificationFilter || "all";
 
+    updateSummary();
     await renderNotifications();
   });
 });
@@ -137,69 +156,65 @@ function getFilteredNotifications() {
   return allNotifications;
 }
 
-/* =========================
-   RENDER PRINCIPAL
-========================= */
-
 async function renderNotifications() {
   if (!notificationsList) return;
 
   const notifications = getFilteredNotifications();
-
   notificationsList.innerHTML = "";
 
   if (!notifications.length) {
     notificationsList.innerHTML = `
-      <p class="empty-state">Nenhuma notificação por aqui.</p>
+      <div class="empty-panel">
+        <strong>Nada por aqui</strong>
+        <p>Quando chegarem novas interacoes, elas aparecem nessa aba.</p>
+      </div>
     `;
     return;
   }
 
-  for (const notification of notifications) {
-    const card = await createNotificationCard(notification, false);
-    notificationsList.appendChild(card);
-  }
-}
+  const cards = await Promise.all(
+    notifications.map((notification) => createNotificationCard(notification, false))
+  );
 
-/* =========================
-   RENDER MINI SIDEBAR
-========================= */
+  cards.forEach((card) => notificationsList.appendChild(card));
+}
 
 async function renderMiniNotifications() {
   if (!miniNotificationsList) return;
 
   const recentNotifications = allNotifications.slice(0, 4);
-
   miniNotificationsList.innerHTML = "";
 
   if (!recentNotifications.length) {
     miniNotificationsList.innerHTML = `
-      <p class="empty-state">Nenhuma notificação ainda.</p>
+      <p class="empty-state">Nenhuma notificacao ainda.</p>
     `;
     return;
   }
 
-  for (const notification of recentNotifications) {
-    const card = await createNotificationCard(notification, true);
-    miniNotificationsList.appendChild(card);
-  }
+  const cards = await Promise.all(
+    recentNotifications.map((notification) => createNotificationCard(notification, true))
+  );
+
+  cards.forEach((card) => miniNotificationsList.appendChild(card));
 }
 
-/* =========================
-   CARD
-========================= */
-
 async function createNotificationCard(notification, mini = false) {
-  const fromUser = await getUserData(notification.fromUid);
+  const fromUser = await getUserData(notification.fromUid || notification.fromUserId);
 
   const name =
+    notification.fromUserName ||
     fromUser?.displayName ||
     fromUser?.name ||
     fromUser?.username ||
-    "Alguém";
+    "Alguem";
 
   const username = fromUser?.username ? `@${fromUser.username}` : "";
-  const avatar = fromUser?.photoURL || fromUser?.avatar || DEFAULT_AVATAR;
+  const avatar =
+    notification.fromUserAvatar ||
+    fromUser?.photoURL ||
+    fromUser?.avatar ||
+    DEFAULT_AVATAR;
 
   const card = document.createElement("article");
   card.className = mini
@@ -218,57 +233,12 @@ async function createNotificationCard(notification, mini = false) {
       </div>
     `;
 
-    card.addEventListener("click", () => {
-      markNotificationAsRead(notification.id);
-    });
-
+    card.addEventListener("click", () => markNotificationAsRead(notification.id));
     return card;
   }
 
   if (notification.type === "follow_request") {
-    const alreadyAnswered =
-      notification.status === "accepted" ||
-      notification.status === "declined";
-
-    card.innerHTML = `
-      <img src="${escapeHTML(avatar)}" alt="Avatar">
-
-      <div class="notification-content">
-        <strong>${escapeHTML(name)}</strong>
-        <p>${escapeHTML(username)} pediu para seguir você.</p>
-
-        ${
-          alreadyAnswered
-            ? `<span class="notification-status">${notification.status === "accepted" ? "Aceito" : "Recusado"}</span>`
-            : `
-              <div class="notification-actions">
-                <button type="button" class="accept-btn">Aceitar</button>
-                <button type="button" class="decline-btn">Recusar</button>
-              </div>
-            `
-        }
-      </div>
-    `;
-
-    if (!alreadyAnswered) {
-      const acceptBtn = card.querySelector(".accept-btn");
-      const declineBtn = card.querySelector(".decline-btn");
-
-      acceptBtn?.addEventListener("click", async (event) => {
-        event.stopPropagation();
-        await acceptFollowRequest(notification);
-      });
-
-      declineBtn?.addEventListener("click", async (event) => {
-        event.stopPropagation();
-        await declineFollowRequest(notification);
-      });
-    }
-
-    card.addEventListener("click", () => {
-      markNotificationAsRead(notification.id);
-    });
-
+    renderFollowRequestCard(card, notification, name, username, avatar);
     return card;
   }
 
@@ -276,21 +246,68 @@ async function createNotificationCard(notification, mini = false) {
     <img src="${escapeHTML(avatar)}" alt="Avatar">
 
     <div class="notification-content">
-      <strong>${escapeHTML(name)}</strong>
+      <div class="notification-line">
+        <strong>${escapeHTML(name)}</strong>
+        ${notification.read ? "" : `<span class="unread-pill">Nova</span>`}
+      </div>
       <p>${escapeHTML(getNotificationText(notification, username))}</p>
+      <span class="notification-time">${escapeHTML(formatDate(notification.createdAt))}</span>
     </div>
   `;
 
-  card.addEventListener("click", () => {
-    markNotificationAsRead(notification.id);
-  });
-
+  card.addEventListener("click", () => markNotificationAsRead(notification.id));
   return card;
 }
 
+function renderFollowRequestCard(card, notification, name, username, avatar) {
+  const alreadyAnswered =
+    notification.status === "accepted" ||
+    notification.status === "declined";
+
+  card.innerHTML = `
+    <img src="${escapeHTML(avatar)}" alt="Avatar">
+
+    <div class="notification-content">
+      <div class="notification-line">
+        <strong>${escapeHTML(name)}</strong>
+        ${notification.read ? "" : `<span class="unread-pill">Nova</span>`}
+      </div>
+      <p>${escapeHTML(username)} pediu para seguir voce.</p>
+      <span class="notification-time">${escapeHTML(formatDate(notification.createdAt))}</span>
+
+      ${
+        alreadyAnswered
+          ? `<span class="notification-status">${notification.status === "accepted" ? "Aceito" : "Recusado"}</span>`
+          : `
+            <div class="notification-actions">
+              <button type="button" class="accept-btn">Aceitar</button>
+              <button type="button" class="decline-btn">Recusar</button>
+            </div>
+          `
+      }
+    </div>
+  `;
+
+  if (!alreadyAnswered) {
+    card.querySelector(".accept-btn")?.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      await acceptFollowRequest(notification);
+    });
+
+    card.querySelector(".decline-btn")?.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      await declineFollowRequest(notification);
+    });
+  }
+
+  card.addEventListener("click", () => markNotificationAsRead(notification.id));
+}
+
 function getNotificationText(notification, username = "") {
+  if (notification.message) return notification.message;
+
   if (notification.type === "follow") {
-    return `${username} começou a seguir você.`;
+    return `${username} comecou a seguir voce.`;
   }
 
   if (notification.type === "follow_accept") {
@@ -298,7 +315,7 @@ function getNotificationText(notification, username = "") {
   }
 
   if (notification.type === "follow_request") {
-    return `${username} pediu para seguir você.`;
+    return `${username} pediu para seguir voce.`;
   }
 
   if (notification.type === "like") {
@@ -313,12 +330,8 @@ function getNotificationText(notification, username = "") {
     return `${username} enviou uma mensagem.`;
   }
 
-  return "Nova notificação.";
+  return notification.title || "Nova notificacao.";
 }
-
-/* =========================
-   ACEITAR / RECUSAR PEDIDO
-========================= */
 
 async function acceptFollowRequest(notification) {
   if (!currentUser) return;
@@ -327,7 +340,7 @@ async function acceptFollowRequest(notification) {
     const requestId = notification.requestId;
 
     if (!requestId) {
-      showMessage("Pedido inválido.");
+      showMessage("Pedido invalido.");
       return;
     }
 
@@ -335,19 +348,19 @@ async function acceptFollowRequest(notification) {
     const requestSnap = await getDoc(requestRef);
 
     if (!requestSnap.exists()) {
-      showMessage("Pedido não encontrado.");
+      showMessage("Pedido nao encontrado.");
       return;
     }
 
     const request = requestSnap.data();
 
     if (request.toUid !== currentUser.uid) {
-      showMessage("Você não pode responder esse pedido.");
+      showMessage("Voce nao pode responder esse pedido.");
       return;
     }
 
     if (request.status !== "pending") {
-      showMessage("Esse pedido já foi respondido.");
+      showMessage("Esse pedido ja foi respondido.");
       return;
     }
 
@@ -400,7 +413,7 @@ async function declineFollowRequest(notification) {
     const requestId = notification.requestId;
 
     if (!requestId) {
-      showMessage("Pedido inválido.");
+      showMessage("Pedido invalido.");
       return;
     }
 
@@ -408,14 +421,14 @@ async function declineFollowRequest(notification) {
     const requestSnap = await getDoc(requestRef);
 
     if (!requestSnap.exists()) {
-      showMessage("Pedido não encontrado.");
+      showMessage("Pedido nao encontrado.");
       return;
     }
 
     const request = requestSnap.data();
 
     if (request.toUid !== currentUser.uid) {
-      showMessage("Você não pode responder esse pedido.");
+      showMessage("Voce nao pode responder esse pedido.");
       return;
     }
 
@@ -438,41 +451,48 @@ async function declineFollowRequest(notification) {
   }
 }
 
-/* =========================
-   MARCAR COMO LIDA
-========================= */
-
 async function markNotificationAsRead(notificationId) {
   if (!notificationId) return;
 
   try {
-    const ref = doc(db, "notifications", notificationId);
-
-    await updateDoc(ref, {
+    await updateDoc(doc(db, "notifications", notificationId), {
       read: true,
       updatedAt: serverTimestamp()
     });
   } catch (error) {
-    console.error("Erro ao marcar notificação como lida:", error);
+    console.error("Erro ao marcar notificacao como lida:", error);
   }
 }
 
-/* =========================
-   HELPERS
-========================= */
-
 async function getUserData(uid) {
   if (!uid) return null;
+  if (userCache.has(uid)) return userCache.get(uid);
 
   try {
     const userSnap = await getDoc(doc(db, "users", uid));
-
-    if (!userSnap.exists()) return null;
-
-    return userSnap.data();
+    const userData = userSnap.exists() ? userSnap.data() : null;
+    userCache.set(uid, userData);
+    return userData;
   } catch (error) {
-    console.error("Erro ao buscar usuário da notificação:", error);
+    console.error("Erro ao buscar usuario da notificacao:", error);
     return null;
+  }
+}
+
+function renderErrorState() {
+  if (notificationsList) {
+    notificationsList.innerHTML = `
+      <div class="empty-panel">
+        <strong>Erro ao carregar</strong>
+        <p>Nao foi possivel buscar suas notificacoes agora.</p>
+      </div>
+    `;
+  }
+
+  if (miniNotificationsList) {
+    miniNotificationsList.innerHTML = `
+      <p class="empty-state">Erro ao carregar.</p>
+    `;
   }
 }
 
@@ -488,6 +508,23 @@ function showMessage(message) {
   setTimeout(() => {
     toast.classList.remove("show");
   }, 3000);
+}
+
+function formatDate(timestamp) {
+  if (!timestamp) return "agora";
+
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  const diff = Date.now() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (minutes < 1) return "agora";
+  if (minutes < 60) return `${minutes}min`;
+  if (hours < 24) return `${hours}h`;
+  if (days < 7) return `${days}d`;
+
+  return date.toLocaleDateString("pt-BR");
 }
 
 function escapeHTML(value) {
