@@ -1491,3 +1491,17 @@ button {
     font-size: 1.6rem;
   }
 }
+
+.spotify-embed-card {
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+}
+
+.spotify-embed-card iframe {
+  display: block;
+  width: 100%;
+  border: 0;
+}

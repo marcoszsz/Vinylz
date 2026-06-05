@@ -23,13 +23,12 @@ import {
   limit
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* =========================
-   ELEMENTOS
-========================= */
+const DEFAULT_AVATAR = "https://api.dicebear.com/8.x/shapes/svg?seed=vinyl";
+
+const logoutBtn = document.getElementById("logoutBtn");
 
 const navAvatar = document.getElementById("navAvatar");
 const navUsername = document.getElementById("navUsername");
-const logoutBtn = document.getElementById("logoutBtn");
 
 const sidebarAvatar = document.getElementById("sidebarAvatar");
 const sidebarName = document.getElementById("sidebarName");
@@ -57,15 +56,7 @@ const storyText = document.getElementById("storyText");
 const storyMediaUrl = document.getElementById("storyMediaUrl");
 const publishStoryBtn = document.getElementById("publishStoryBtn");
 
-const trendList = document.getElementById("trendList");
-const suggestionsList = document.getElementById("suggestionsList");
 const toast = document.getElementById("toast");
-
-/* =========================
-   ESTADO
-========================= */
-
-const DEFAULT_AVATAR = "https://api.dicebear.com/8.x/shapes/svg?seed=vinyl";
 
 let currentUser = null;
 let currentUserData = {};
@@ -73,13 +64,8 @@ let currentFilter = "for-you";
 let followingIds = [];
 let cachedPosts = [];
 let cachedStories = [];
-
 let unsubscribePosts = null;
 let unsubscribeStories = null;
-
-/* =========================
-   AUTH
-========================= */
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -91,15 +77,10 @@ onAuthStateChanged(auth, async (user) => {
 
   await loadCurrentUser();
   await loadFollowing();
-  await loadSuggestions();
 
   listenPosts();
   listenStories();
 });
-
-/* =========================
-   EVENTOS
-========================= */
 
 logoutBtn?.addEventListener("click", async () => {
   try {
@@ -107,51 +88,14 @@ logoutBtn?.addEventListener("click", async () => {
     window.location.href = "login.html";
   } catch (error) {
     console.error(error);
-    showToast("Não foi possível sair agora.");
+    showToast("Não foi possível sair.");
   }
 });
 
-publishPost?.addEventListener("click", createPost);
-
-refreshFeedBtn?.addEventListener("click", () => {
-  renderPosts();
-  showToast("Feed atualizado.");
-});
-
-tabButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    tabButtons.forEach((btn) => btn.classList.remove("active"));
-    button.classList.add("active");
-
-    currentFilter = button.dataset.filter || "for-you";
-    renderPosts();
-  });
-});
-
-addStoryBtn?.addEventListener("click", () => {
-  openStoryModal();
-});
-
-closeStoryModal?.addEventListener("click", () => {
-  closeStory();
-});
-
-storyModal?.addEventListener("click", (event) => {
-  if (event.target === storyModal) closeStory();
-});
-
-publishStoryBtn?.addEventListener("click", createStory);
-
-/* =========================
-   USUÁRIO
-========================= */
-
 async function loadCurrentUser() {
   try {
-    const userRef = doc(db, "users", currentUser.uid);
-    const userSnap = await getDoc(userRef);
-
-    currentUserData = userSnap.exists() ? userSnap.data() : {};
+    const snap = await getDoc(doc(db, "users", currentUser.uid));
+    currentUserData = snap.exists() ? snap.data() : {};
 
     const username =
       currentUserData.username ||
@@ -184,16 +128,16 @@ async function loadCurrentUser() {
 
 async function loadFollowing() {
   try {
-    const followingQuery = query(
-      collection(db, "follows"),
-      where("followerId", "==", currentUser.uid),
-      limit(100)
+    const snap = await getDocs(
+      query(
+        collection(db, "follows"),
+        where("followerId", "==", currentUser.uid),
+        limit(100)
+      )
     );
 
-    const snap = await getDocs(followingQuery);
-
     followingIds = snap.docs
-      .map((item) => item.data().followingId)
+      .map((docSnap) => docSnap.data().followingId)
       .filter(Boolean);
 
     setText(followingCount, String(followingIds.length));
@@ -204,9 +148,9 @@ async function loadFollowing() {
   }
 }
 
-/* =========================
-   CRIAR POST
-========================= */
+/* PUBLICAR POST */
+
+publishPost?.addEventListener("click", createPost);
 
 async function createPost() {
   const content = postText?.value.trim() || "";
@@ -249,6 +193,7 @@ async function createPost() {
 
       content,
       spotifyUrl: spotify,
+      spotifyLink: spotify,
       imageUrl: media,
       postType: type,
       rating: stars ? Number(stars) : 0,
@@ -271,17 +216,15 @@ async function createPost() {
 
     showToast("Post publicado.");
   } catch (error) {
-    console.error("Erro ao publicar post:", error);
-    showToast("Não foi possível publicar. Verifique as regras do Firestore.");
+    console.error("Erro ao publicar:", error);
+    showToast("Não foi possível publicar.");
   } finally {
     publishPost.disabled = false;
     publishPost.textContent = "Publicar";
   }
 }
 
-/* =========================
-   LISTAR POSTS
-========================= */
+/* FEED */
 
 function listenPosts() {
   if (!feedList) return;
@@ -304,9 +247,12 @@ function listenPosts() {
         }))
         .filter((post) => !post.deleted);
 
-      setText(postCount, String(cachedPosts.filter((p) => p.userId === currentUser.uid).length));
+      setText(
+        postCount,
+        String(cachedPosts.filter((post) => post.userId === currentUser.uid).length)
+      );
 
-      await hydrateUserInteractions();
+      await hydrateInteractions();
       renderPosts();
     },
     (error) => {
@@ -316,28 +262,41 @@ function listenPosts() {
   );
 }
 
-async function hydrateUserInteractions() {
+async function hydrateInteractions() {
   try {
-    const checks = cachedPosts.map(async (post) => {
-      const likeRef = doc(db, "posts", post.id, "likes", currentUser.uid);
-      const repostRef = doc(db, "posts", post.id, "reposts", currentUser.uid);
+    await Promise.all(
+      cachedPosts.map(async (post) => {
+        const likeRef = doc(db, "posts", post.id, "likes", currentUser.uid);
+        const repostRef = doc(db, "posts", post.id, "reposts", currentUser.uid);
 
-      const [likeSnap, repostSnap] = await Promise.all([
-        getDoc(likeRef),
-        getDoc(repostRef)
-      ]);
+        const [likeSnap, repostSnap] = await Promise.all([
+          getDoc(likeRef),
+          getDoc(repostRef)
+        ]);
 
-      post.likedByMe = likeSnap.exists();
-      post.repostedByMe = repostSnap.exists();
-
-      return post;
-    });
-
-    await Promise.all(checks);
+        post.likedByMe = likeSnap.exists();
+        post.repostedByMe = repostSnap.exists();
+      })
+    );
   } catch (error) {
     console.warn("Erro ao carregar interações:", error);
   }
 }
+
+refreshFeedBtn?.addEventListener("click", () => {
+  renderPosts();
+  showToast("Feed atualizado.");
+});
+
+tabButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    tabButtons.forEach((btn) => btn.classList.remove("active"));
+    button.classList.add("active");
+
+    currentFilter = button.dataset.filter || "for-you";
+    renderPosts();
+  });
+});
 
 function renderPosts() {
   if (!feedList) return;
@@ -345,11 +304,17 @@ function renderPosts() {
   let posts = [...cachedPosts];
 
   if (currentFilter === "following") {
-    posts = posts.filter((post) => followingIds.includes(post.userId) || post.userId === currentUser.uid);
+    posts = posts.filter(
+      (post) =>
+        followingIds.includes(post.userId) ||
+        post.userId === currentUser.uid
+    );
   }
 
   if (currentFilter === "reviews") {
-    posts = posts.filter((post) => post.postType === "review" || Number(post.rating) > 0);
+    posts = posts.filter(
+      (post) => post.postType === "review" || Number(post.rating) > 0
+    );
   }
 
   if (currentFilter === "listening") {
@@ -388,34 +353,36 @@ function renderPostCard(post) {
   const typeLabel = getPostTypeLabel(post.postType);
   const isOwner = post.userId === currentUser.uid;
 
-  const ratingHTML = Number(post.rating) > 0
-    ? `<div class="post-rating">${"★".repeat(Number(post.rating))}${"☆".repeat(5 - Number(post.rating))}</div>`
-    : "";
+  const spotifyUrl =
+    post.spotifyUrl ||
+    post.spotifyLink ||
+    "";
 
-  const mediaHTML = post.imageUrl
-    ? `
-      <div class="post-media">
-        <img src="${escapeHTML(post.imageUrl)}" alt="Mídia do post" loading="lazy" onerror="this.parentElement.remove()">
-      </div>
-    `
-    : "";
+  const ratingHTML =
+    Number(post.rating) > 0
+      ? `<div class="post-rating">${"★".repeat(Number(post.rating))}${"☆".repeat(5 - Number(post.rating))}</div>`
+      : "";
 
-  const spotifyHTML = post.spotifyUrl
-    ? `
-      <a class="spotify-card" href="${escapeHTML(post.spotifyUrl)}" target="_blank" rel="noopener noreferrer">
-        <span class="icon">♪</span>
-        <div>
-          <strong>${escapeHTML(getProviderName(post.spotifyUrl))}</strong>
-          <span>${escapeHTML(post.spotifyUrl)}</span>
+  const mediaHTML =
+    post.imageUrl
+      ? `
+        <div class="post-media">
+          <img src="${escapeHTML(post.imageUrl)}" alt="Mídia do post" loading="lazy" onerror="this.parentElement.remove()">
         </div>
-      </a>
-    `
-    : "";
+      `
+      : "";
+
+  const spotifyHTML = createSpotifyEmbed(spotifyUrl);
 
   return `
     <article class="post-card" id="post-${escapeHTML(post.id)}">
       <div class="post-top">
-        <img class="post-avatar" src="${escapeHTML(avatar)}" alt="${escapeHTML(name)}" onerror="this.src='${DEFAULT_AVATAR}'">
+        <img
+          class="post-avatar"
+          src="${escapeHTML(avatar)}"
+          alt="${escapeHTML(name)}"
+          onerror="this.src='${DEFAULT_AVATAR}'"
+        >
 
         <div class="post-body">
           <div class="post-meta">
@@ -457,9 +424,66 @@ function renderPostCard(post) {
   `;
 }
 
-/* =========================
-   LIKE / REPOST / DELETE
-========================= */
+/* SPOTIFY EMBED */
+
+function createSpotifyEmbed(url) {
+  if (!url) return "";
+
+  const cleanUrl = String(url).trim();
+
+  let type = "";
+  let id = "";
+
+  if (cleanUrl.includes("/track/")) {
+    type = "track";
+    id = cleanUrl.split("/track/")[1]?.split("?")[0];
+  }
+
+  if (cleanUrl.includes("/album/")) {
+    type = "album";
+    id = cleanUrl.split("/album/")[1]?.split("?")[0];
+  }
+
+  if (cleanUrl.includes("/artist/")) {
+    type = "artist";
+    id = cleanUrl.split("/artist/")[1]?.split("?")[0];
+  }
+
+  if (cleanUrl.includes("/playlist/")) {
+    type = "playlist";
+    id = cleanUrl.split("/playlist/")[1]?.split("?")[0];
+  }
+
+  if (!type || !id) {
+    return `
+      <a class="spotify-card" href="${escapeHTML(cleanUrl)}" target="_blank" rel="noopener noreferrer">
+        <span class="icon">♪</span>
+        <div>
+          <strong>Link musical</strong>
+          <span>${escapeHTML(shortenUrl(cleanUrl))}</span>
+        </div>
+      </a>
+    `;
+  }
+
+  const embedUrl = `https://open.spotify.com/embed/${type}/${id}`;
+
+  return `
+    <div class="spotify-embed-card">
+      <iframe
+        src="${escapeHTML(embedUrl)}"
+        width="100%"
+        height="152"
+        frameborder="0"
+        allowfullscreen=""
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy">
+      </iframe>
+    </div>
+  `;
+}
+
+/* INTERAÇÕES */
 
 async function toggleLike(postId) {
   try {
@@ -539,13 +563,21 @@ async function copyPostLink(postId) {
     await navigator.clipboard.writeText(url);
     showToast("Link copiado.");
   } catch {
-    showToast("Não foi possível copiar o link.");
+    showToast("Não foi possível copiar.");
   }
 }
 
-/* =========================
-   STORIES
-========================= */
+/* STORIES */
+
+addStoryBtn?.addEventListener("click", openStoryModal);
+
+closeStoryModal?.addEventListener("click", closeStory);
+
+storyModal?.addEventListener("click", (event) => {
+  if (event.target === storyModal) closeStory();
+});
+
+publishStoryBtn?.addEventListener("click", createStory);
 
 function listenStories() {
   if (!storiesList) return;
@@ -568,8 +600,7 @@ function listenStories() {
 
       renderStories();
     },
-    (error) => {
-      console.error("Erro ao carregar stories:", error);
+    () => {
       storiesList.innerHTML = `<div class="story-empty">Não foi possível carregar stories.</div>`;
     }
   );
@@ -578,19 +609,13 @@ function listenStories() {
 function renderStories() {
   if (!storiesList) return;
 
-  const ownAvatar =
-    currentUserData.photoURL ||
-    currentUserData.avatar ||
-    currentUser?.photoURL ||
-    DEFAULT_AVATAR;
-
   const storiesHTML = cachedStories
     .map((story) => {
       const avatar = story.userAvatar || DEFAULT_AVATAR;
       const username = story.userUsername || story.userName || "usuario";
 
       return `
-        <button class="story-item" type="button" data-story="${escapeHTML(story.id)}">
+        <button class="story-item" type="button">
           <span>
             <img src="${escapeHTML(avatar)}" alt="${escapeHTML(username)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
           </span>
@@ -610,22 +635,13 @@ function renderStories() {
   `;
 
   document.getElementById("storyAddInline")?.addEventListener("click", openStoryModal);
-
-  document.querySelectorAll("[data-story]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const story = cachedStories.find((item) => item.id === button.dataset.story);
-      if (story) showStoryPreview(story);
-    });
-  });
 }
 
 function openStoryModal() {
-  if (!storyModal) return;
+  storyModal?.classList.add("show");
 
   if (storyText) storyText.value = "";
   if (storyMediaUrl) storyMediaUrl.value = "";
-
-  storyModal.classList.add("show");
 }
 
 function closeStory() {
@@ -683,86 +699,7 @@ async function createStory() {
   }
 }
 
-function showStoryPreview(story) {
-  const modal = document.createElement("div");
-  modal.className = "modal-overlay show";
-
-  const image = story.imageUrl
-    ? `<img src="${escapeHTML(story.imageUrl)}" alt="Story" style="width:100%;max-height:420px;object-fit:cover;border-radius:20px;margin:14px 0;">`
-    : "";
-
-  modal.innerHTML = `
-    <div class="modal-card">
-      <div class="modal-head">
-        <h2>@${escapeHTML(story.userUsername || "usuario")}</h2>
-        <button type="button">×</button>
-      </div>
-
-      ${image}
-
-      <p style="color:white;line-height:1.5;font-weight:800;">
-        ${escapeHTML(story.text || "Story Vinyl")}
-      </p>
-    </div>
-  `;
-
-  modal.querySelector("button")?.addEventListener("click", () => modal.remove());
-  modal.addEventListener("click", (event) => {
-    if (event.target === modal) modal.remove();
-  });
-
-  document.body.appendChild(modal);
-}
-
-/* =========================
-   SUGESTÕES
-========================= */
-
-async function loadSuggestions() {
-  if (!suggestionsList) return;
-
-  try {
-    const usersQuery = query(collection(db, "users"), limit(6));
-    const snap = await getDocs(usersQuery);
-
-    const users = snap.docs
-      .map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data()
-      }))
-      .filter((user) => user.id !== currentUser.uid)
-      .slice(0, 4);
-
-    if (!users.length) return;
-
-    suggestionsList.innerHTML = users.map((user) => {
-      const username = user.username || user.name || "usuario";
-      const name = user.displayName || user.name || username;
-      const avatar = user.photoURL || user.avatar || DEFAULT_AVATAR;
-
-      return `
-        <article class="suggestion-item">
-          <img src="${escapeHTML(avatar)}" alt="${escapeHTML(name)}" onerror="this.src='${DEFAULT_AVATAR}'">
-
-          <div>
-            <strong>${escapeHTML(name)}</strong>
-            <small>@${escapeHTML(username)}</small>
-          </div>
-
-          <a href="profile.html?u=${encodeURIComponent(user.id)}" class="mini-btn">
-            Ver
-          </a>
-        </article>
-      `;
-    }).join("");
-  } catch (error) {
-    console.warn("Erro ao carregar sugestões:", error);
-  }
-}
-
-/* =========================
-   UTILIDADES
-========================= */
+/* HELPERS */
 
 function getPostTypeLabel(type) {
   const labels = {
@@ -773,17 +710,6 @@ function getPostTypeLabel(type) {
   };
 
   return labels[type] || "";
-}
-
-function getProviderName(url = "") {
-  const clean = url.toLowerCase();
-
-  if (clean.includes("spotify")) return "Spotify";
-  if (clean.includes("youtube") || clean.includes("youtu.be")) return "YouTube";
-  if (clean.includes("music.apple")) return "Apple Music";
-  if (clean.includes("soundcloud")) return "SoundCloud";
-
-  return "Link musical";
 }
 
 function formatDate(value) {
@@ -806,6 +732,15 @@ function formatDate(value) {
   });
 }
 
+function shortenUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname + parsed.pathname.slice(0, 42);
+  } catch {
+    return url.length > 48 ? url.slice(0, 48) + "..." : url;
+  }
+}
+
 function setText(element, value) {
   if (element) element.textContent = value;
 }
@@ -814,9 +749,20 @@ function setImg(element, src) {
   if (!element) return;
 
   element.src = src || DEFAULT_AVATAR;
+
   element.onerror = () => {
     element.src = DEFAULT_AVATAR;
   };
+}
+
+function emptyState(message) {
+  return `
+    <div class="post-card">
+      <p class="post-text" style="text-align:center;color:rgba(255,255,255,.65);">
+        ${escapeHTML(message)}
+      </p>
+    </div>
+  `;
 }
 
 function showToast(message) {
@@ -832,17 +778,7 @@ function showToast(message) {
 
   showToast.timer = setTimeout(() => {
     toast.classList.remove("show");
-  }, 3200);
-}
-
-function emptyState(message) {
-  return `
-    <div class="post-card">
-      <p class="post-text" style="text-align:center;color:rgba(255,255,255,.65);">
-        ${escapeHTML(message)}
-      </p>
-    </div>
-  `;
+  }, 3000);
 }
 
 function escapeHTML(value = "") {
