@@ -6,10 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>VINYL — Entrar no sistema</title>
-
+  
+  <meta name="description" content="Acesse sua conta Vinyl para gerenciar sua música e coleção de vinis" />
+  <meta name="keywords" content="Vinyl, login, entrada, música" />
+  
   <link rel="stylesheet" href="auth.css" />
-
+  <link rel="icon" type="image/svg+xml" href="vinyl.png" />
+  
   <meta name="theme-color" content="#0b0b0d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 </head>
 
 <body>
@@ -30,8 +36,8 @@
         </p>
       </div>
 
-      <div class="error-message" id="errorMessage"></div>
-      <div class="success-message" id="successMessage"></div>
+      <div class="error-message" id="errorMessage" role="alert" aria-live="polite"></div>
+      <div class="success-message" id="successMessage" role="status" aria-live="polite"></div>
 
       <form id="loginForm">
 
@@ -87,7 +93,7 @@
           Esqueci minha senha
         </a>
 
-        <button type="submit" class="login-btn" id="loginBtn">
+        <button type="submit" class="login-btn" id="loginBtn" aria-busy="false">
           Entrar
         </button>
 
@@ -122,10 +128,10 @@
 
       <p class="signup-text">
         Não possui conta?
-        <a href="register.html">Criar conta</a>
+        <a href="register.html" aria-label="Ir para página de registro">Criar conta</a>
       </p>
 
-      <a href="privacy.html" class="privacy">
+      <a href="privacy.html" class="privacy" aria-label="Ler política de privacidade e termos de serviço">
         Privacidade e termos
       </a>
 
