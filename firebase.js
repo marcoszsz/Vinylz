@@ -16,13 +16,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCSpkdZnlh4sr5vm0w-QC9poiU4e2uAS2M",
-  authDomain: "vinyl-4b187.firebaseapp.com",
-  projectId: "vinyl-4b187",
-  storageBucket: "vinyl-4b187.firebasestorage.app",
-  messagingSenderId: "155456309182",
-  appId: "1:155456309182:web:451a778d4110630c421bef",
-  measurementId: "G-JHM9MGEZX1"
+  projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || "vinyl-4b187",
+  authDomain: import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN || "vinyl-4b187.firebaseapp.com"
 };
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
