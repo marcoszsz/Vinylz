@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Vinyl — Pulse</title>
+
+  <link rel="stylesheet" href="timeline.css" />
+</head>
+
+<body>
+  <div class="app-bg"></div>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <a href="home.html" class="nav-logo">VINYL</a>
+
+    <nav class="nav-links">
+      <a href="home.html">Home</a>
+      <a href="search.html">Catálogo</a>
+      <a href="social.html">Social</a>
+      <a href="timeline.html" class="active">Pulse</a>
+      <a href="profile.html">Perfil</a>
+    </nav>
+
+    <div class="nav-user">
+      <a href="notifications.html" class="nav-icon" title="Notificações">🔔</a>
+
+      <a href="profile.html" class="user-pill">
+        <img
+          id="navAvatar"
+          src="https://api.dicebear.com/8.x/shapes/svg?seed=vinyl"
+          alt="Avatar"
+        />
+        <span id="navUsername">buggy</span>
+      </a>
+
+      <button id="logoutBtn" class="logout-btn" type="button">
+        Sair
+      </button>
+    </div>
+
+    <button class="mobile-menu-btn" id="mobileMenuBtn" type="button">
+      ☰
+    </button>
+  </header>
+
+  <nav class="mobile-menu" id="mobileMenu">
+    <a href="home.html">Home</a>
+    <a href="search.html">Catálogo</a>
+    <a href="timeline.html" class="active">Pulse</a>
+    <a href="profile.html">Perfil</a>
+    <a href="notifications.html">Notificações</a>
+  </nav>
+
+  <main class="pulse-page">
+
+    <!-- HERO -->
+    <section class="pulse-hero">
+      <div class="pulse-hero-content">
+        <span class="eyebrow">PULSE SOCIAL</span>
+
+        <h1>
+          O som da comunidade<br />
+          em tempo real.
+        </h1>
+
+        <p>
+          Veja o que seus amigos estão ouvindo, acompanhe reviews recentes,
+          descubra discos em alta e compartilhe sua vibe musical no Vinyl.
+        </p>
+
+        <div class="pulse-actions">
+          <a href="#composer" class="hero-btn primary">Postar agora</a>
+          <a href="search.html" class="hero-btn secondary">Explorar catálogo</a>
+        </div>
+      </div>
+
+      <div class="pulse-vinyl" aria-hidden="true">
+        <div class="disc">
+          <span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- MINI CARDS -->
+    <section class="pulse-strip">
+      <article class="pulse-mini-card">
+        <span>🔥</span>
+        <div>
+          <strong>Em alta</strong>
+          <p>Gêneros, artistas e reviews que estão movimentando o Vinyl.</p>
+        </div>
+      </article>
+
+      <article class="pulse-mini-card">
+        <span>🎧</span>
+        <div>
+          <strong>Ouvindo agora</strong>
+          <p>Atividades musicais recentes dos usuários e amigos.</p>
+        </div>
+      </article>
+
+      <article class="pulse-mini-card">
+        <span>⭐</span>
+        <div>
+          <strong>Reviews novas</strong>
+          <p>Opiniões, notas e recomendações fresquinhas da comunidade.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <section class="pulse-layout">
+
+      <!-- COLUNA ESQUERDA -->
+      <aside class="left-sidebar">
+
+        <section class="profile-card">
+          <img
+            id="sidebarAvatar"
+            class="profile-avatar"
+            src="https://api.dicebear.com/8.x/shapes/svg?seed=vinyl"
+            alt="Avatar do usuário"
+          />
+
+          <h3 id="sidebarName">buggy</h3>
+          <p id="sidebarUsername">@buggy</p>
+
+          <div class="profile-stats">
+            <div>
+              <strong id="postCount">0</strong>
+              <span>Posts</span>
+            </div>
+
+            <div>
+              <strong id="followingCount">0</strong>
+              <span>Seguindo</span>
+            </div>
+          </div>
+
+          <a href="profile.html" class="profile-btn">Ver perfil</a>
+        </section>
+
+        <section class="side-card">
+          <div class="side-head">
+            <h3>Meu Vinyl</h3>
+          </div>
+
+          <div class="quick-list">
+            <a href="favorites.html">
+              <span>💗</span>
+              Favoritos
+            </a>
+
+            <a href="recently-played.html">
+              <span>🎧</span>
+              Tocadas recentes
+            </a>
+
+            <a href="compatibility.html">
+              <span>🧬</span>
+              Compatibilidade
+            </a>
+
+            <a href="settings.html">
+              <span>⚙️</span>
+              Configurações
+            </a>
+          </div>
+        </section>
+
+      </aside>
+
+      <!-- FEED CENTRAL -->
+      <section class="center-feed">
+
+        <!-- COMPOSER -->
+        <section class="composer-card" id="composer">
+          <div class="composer-top">
+            <img
+              id="composerAvatar"
+              src="https://api.dicebear.com/8.x/shapes/svg?seed=vinyl"
+              alt="Avatar"
+            />
+
+            <div>
+              <strong>Compartilhe sua vibe</strong>
+              <span>Poste review, música, álbum ou link do Spotify.</span>
+            </div>
+          </div>
+
+          <textarea
+            id="postText"
+            placeholder="O que está tocando por aí?"
+            maxlength="500"
+          ></textarea>
+
+          <div class="composer-grid">
+            <input
+              id="spotifyLink"
+              type="url"
+              placeholder="Cole um link do Spotify"
+            />
+
+            <input
+              id="mediaUrl"
+              type="url"
+              placeholder="Imagem, GIF ou vídeo"
+            />
+          </div>
+
+          <div class="composer-bottom">
+            <select id="postType">
+              <option value="normal">Post normal</option>
+              <option value="review">Review</option>
+              <option value="listening">Estou ouvindo</option>
+              <option value="recommendation">Recomendação</option>
+            </select>
+
+            <select id="rating">
+              <option value="">Sem nota</option>
+              <option value="5">★★★★★</option>
+              <option value="4">★★★★☆</option>
+              <option value="3">★★★☆☆</option>
+              <option value="2">★★☆☆☆</option>
+              <option value="1">★☆☆☆☆</option>
+            </select>
+
+            <button id="publishPost" type="button">Publicar</button>
+          </div>
+        </section>
+
+        <!-- FILTROS -->
+        <section class="feed-tabs">
+          <button class="tab-btn active" type="button" data-filter="for-you">
+            Para você
+          </button>
+
+          <button class="tab-btn" type="button" data-filter="following">
+            Seguindo
+          </button>
+
+          <button class="tab-btn" type="button" data-filter="reviews">
+            Reviews
+          </button>
+
+          <button class="tab-btn" type="button" data-filter="listening">
+            Ouvindo
+          </button>
+        </section>
+
+        <!-- STORIES -->
+        <section class="stories-card">
+          <div class="section-head">
+            <div>
+              <h2>Stories musicais</h2>
+              <p>Momentos rápidos da comunidade.</p>
+            </div>
+
+            <button id="addStoryBtn" type="button">+ Story</button>
+          </div>
+
+          <div class="stories-list" id="storiesList">
+            <button class="story-item add" type="button">
+              <span>+</span>
+              <small>Seu story</small>
+            </button>
+
+            <div class="story-empty">
+              Nenhum story ativo.
+            </div>
+          </div>
+        </section>
+
+        <!-- FEED -->
+        <section class="feed-card">
+          <div class="section-head feed-head">
+            <div>
+              <h2>Feed Pulse</h2>
+              <p>Posts recentes e relevantes para você.</p>
+            </div>
+
+            <button id="refreshFeedBtn" type="button">Atualizar</button>
+          </div>
+
+          <div id="feedList" class="feed-list">
+            <article class="post-skeleton">
+              <div class="skeleton-avatar"></div>
+
+              <div class="skeleton-content">
+                <span></span>
+                <p></p>
+                <p></p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+      </section>
+
+      <!-- COLUNA DIREITA -->
+      <aside class="right-sidebar">
+
+        <section class="side-card">
+          <div class="side-head">
+            <h3>Em alta no Vinyl</h3>
+            <p>Assuntos e buscas da comunidade.</p>
+          </div>
+
+          <div class="trend-list" id="trendList">
+            <button type="button">
+              <span>🔥</span>
+              <div>
+                <strong>Rock</strong>
+                <small>2 buscas</small>
+              </div>
+            </button>
+
+            <button type="button">
+              <span>🎧</span>
+              <div>
+                <strong>K-Pop</strong>
+                <small>1 busca</small>
+              </div>
+            </button>
+
+            <button type="button">
+              <span>💿</span>
+              <div>
+                <strong>Álbuns clássicos</strong>
+                <small>Subindo agora</small>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <section class="side-card">
+          <div class="side-head">
+            <h3>Batalha da semana</h3>
+            <p>Escolha um lado.</p>
+          </div>
+
+          <div class="battle-card">
+            <div class="battle-option">
+              <strong>Álbum perfeito</strong>
+              <span>💿</span>
+            </div>
+
+            <div class="battle-vs">VS</div>
+
+            <div class="battle-option">
+              <strong>Single viciante</strong>
+              <span>🎵</span>
+            </div>
+          </div>
+
+          <button class="side-action" type="button">
+            Votar agora
+          </button>
+        </section>
+
+        <section class="side-card">
+          <div class="side-head">
+            <h3>Sugestões</h3>
+            <p>Pessoas para seguir.</p>
+          </div>
+
+          <div class="suggestions-list" id="suggestionsList">
+            <article class="suggestion-item">
+              <img
+                src="https://api.dicebear.com/8.x/shapes/svg?seed=teste-adm"
+                alt="Avatar"
+              />
+
+              <div>
+                <strong>teste adm</strong>
+                <small>@teste</small>
+              </div>
+
+              <a href="profile.html?u=teste" class="mini-btn">
+                Ver
+              </a>
+            </article>
+          </div>
+        </section>
+
+      </aside>
+
+    </section>
+  </main>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <a href="home.html">
+      <span>⌂</span>
+      Home
+    </a>
+
+    <a href="search.html">
+      <span>⌕</span>
+      Buscar
+    </a>
+
+    <a href="#composer" class="main-action">
+      <span>＋</span>
+      Postar
+    </a>
+
+    <a href="timeline.html" class="active">
+      <span>●</span>
+      Pulse
+    </a>
+
+    <a href="profile.html">
+      <span>◉</span>
+      Perfil
+    </a>
+  </nav>
+
+  <!-- MODAL DE STORY -->
+  <div class="modal-overlay" id="storyModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Novo story</h2>
+        <button id="closeStoryModal" type="button">×</button>
+      </div>
+
+      <label for="storyText">Texto</label>
+      <textarea id="storyText" placeholder="Compartilhe um momento musical..."></textarea>
+
+      <label for="storyMediaUrl">Imagem, GIF ou vídeo</label>
+      <input id="storyMediaUrl" type="url" placeholder="Cole uma URL de mídia" />
+
+      <button id="publishStoryBtn" type="button" class="modal-submit">
+        Publicar story
+      </button>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="timeline.js"></script>
+
+  <script>
+    const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+    const mobileMenu = document.getElementById("mobileMenu");
+
+    if (mobileMenuBtn && mobileMenu) {
+      mobileMenuBtn.addEventListener("click", () => {
+        mobileMenu.classList.toggle("show");
+      });
+    }
+
+    const addStoryBtn = document.getElementById("addStoryBtn");
+    const storyModal = document.getElementById("storyModal");
+    const closeStoryModal = document.getElementById("closeStoryModal");
+
+    if (addStoryBtn && storyModal) {
+      addStoryBtn.addEventListener("click", () => {
+        storyModal.classList.add("show");
+      });
+    }
+
+    if (closeStoryModal && storyModal) {
+      closeStoryModal.addEventListener("click", () => {
+        storyModal.classList.remove("show");
+      });
+    }
+
+    if (storyModal) {
+      storyModal.addEventListener("click", (event) => {
+        if (event.target === storyModal) {
+          storyModal.classList.remove("show");
+        }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vinylz - Rede Social Musical</title>
+  <link rel="stylesheet" href="./features/shared/styles/variables.css" />
+  <link rel="stylesheet" href="./features/shared/styles/reset.css" />
+  <link rel="stylesheet" href="./features/shared/styles/typography.css" />
+  <link rel="stylesheet" href="./features/shared/styles/layout.css" />
+  <link rel="stylesheet" href="./features/shared/styles/theme.css" />
+  <style>
+    @keyframes slideIn {
+      from {
+        transform: translateY(100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateY(100px);
+        opacity: 0;
+      }
+    }
+
+    #app {
+      min-height: 100vh;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .error {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-size: 1.5rem;
+      color: var(--color-error);
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

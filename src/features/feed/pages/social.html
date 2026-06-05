@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Vinyl — Social</title>
+
+  <link rel="stylesheet" href="social.css" />
+  <meta name="theme-color" content="#07070a" />
+</head>
+
+<body>
+
+  <div class="app-bg"></div>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+
+    <a href="home.html" class="logo">
+      VINYL
+    </a>
+
+    <nav class="navbar-links" id="navbarLinks">
+      <a href="home.html">Home</a>
+      <a href="search.html">Catálogo</a>
+      <a href="social.html" class="active">Social</a>
+      <a href="timeline.html">Timeline</a>
+      <a href="profile.html">Perfil</a>
+    </nav>
+
+    <div class="navbar-actions">
+
+      <a href="profile.html" class="navbar-profile">
+        <img
+          src="https://placehold.co/120x120/111111/ff4d6d?text=V"
+          alt="Avatar"
+          id="navbarAvatar"
+        />
+        <span id="navbarUsername">Perfil</span>
+      </a>
+
+      <button type="button" class="logout-btn" id="logoutBtn">
+        Sair
+      </button>
+
+      <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menu">
+        ☰
+      </button>
+
+    </div>
+
+  </header>
+
+  <main class="social-page">
+
+    <!-- HERO -->
+    <section class="social-hero">
+
+      <div class="hero-content">
+        <span class="eyebrow">Comunidade Vinyl</span>
+
+        <h1>
+          Veja o que a galera está
+          <span>ouvindo agora.</span>
+        </h1>
+
+        <p>
+          Descubra posts, reviews, links do Spotify, usuários em destaque e conversas musicais da comunidade.
+        </p>
+
+        <div class="hero-actions">
+          <a href="timeline.html" class="hero-primary">Abrir timeline</a>
+          <a href="search.html" class="hero-secondary">Explorar catálogo</a>
+        </div>
+      </div>
+
+      <div class="hero-orb" aria-hidden="true">
+        <div class="vinyl-disc"></div>
+      </div>
+
+    </section>
+
+    <div class="social-layout">
+
+      <!-- COLUNA PRINCIPAL -->
+      <section class="main-column">
+
+        <!-- POSTS EM ALTA -->
+        <section class="social-card trending-posts-card">
+
+          <div class="section-header">
+            <div>
+              <h2>Posts em alta</h2>
+              <p>Posts populares e recentes da comunidade Vinyl.</p>
+            </div>
+
+            <a href="timeline.html" class="see-all-link">
+              Ver timeline
+            </a>
+          </div>
+
+          <div class="trending-posts-list" id="trendingPostsList">
+            <p class="empty-state">Carregando posts em alta...</p>
+          </div>
+
+        </section>
+
+        <!-- REVIEWS EM DESTAQUE -->
+        <section class="social-card reviews-card">
+
+          <div class="section-header">
+            <div>
+              <h2>Reviews em destaque</h2>
+              <p>Opiniões musicais que podem virar conversa.</p>
+            </div>
+
+            <a href="timeline.html" class="see-all-link">
+              Ver reviews
+            </a>
+          </div>
+
+          <div class="reviews-list" id="reviewsList">
+            <p class="empty-state">Carregando reviews...</p>
+          </div>
+
+        </section>
+
+      </section>
+
+      <!-- SIDEBAR -->
+      <aside class="social-sidebar">
+
+        <section class="social-card profile-mini-card">
+
+          <img
+            src="https://placehold.co/240x240/111111/ff4d6d?text=V"
+            alt="Avatar"
+            id="sidebarAvatar"
+          />
+
+          <h3 id="sidebarName">Carregando...</h3>
+          <p id="sidebarUsername">@usuario</p>
+
+          <a href="profile.html">
+            Ver meu perfil
+          </a>
+
+        </section>
+
+        <section class="social-card">
+
+          <div class="section-header small">
+            <div>
+              <h2>Sugestões</h2>
+              <p>Perfis para conhecer.</p>
+            </div>
+          </div>
+
+          <div class="suggestions-list" id="suggestionsList">
+            <p class="empty-state">Carregando sugestões...</p>
+          </div>
+
+        </section>
+
+        <section class="social-card">
+
+          <div class="section-header small">
+            <div>
+              <h2>Atividade recente</h2>
+              <p>Movimentos da comunidade.</p>
+            </div>
+          </div>
+
+          <div class="activity-list" id="activityList">
+            <p class="empty-state">Carregando atividade...</p>
+          </div>
+
+        </section>
+
+        <section class="social-card tip-card">
+          <span>💬</span>
+          <h3>Entre na conversa</h3>
+          <p>
+            Clique em qualquer post em alta para abrir na timeline, responder, curtir ou republicar.
+          </p>
+        </section>
+
+      </aside>
+
+    </div>
+
+  </main>
+
+  <!-- MODAL DE POST -->
+  <div class="post-modal" id="postModal" hidden>
+
+    <div class="post-modal-backdrop" id="closePostModalBackdrop"></div>
+
+    <section class="post-modal-card">
+
+      <button type="button" class="modal-close-btn" id="closePostModalBtn">
+        ×
+      </button>
+
+      <article id="postModalContent">
+        <p class="empty-state">Carregando post...</p>
+      </article>
+
+    </section>
+
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="social.js"></script>
+
+</body>
+
+</html>

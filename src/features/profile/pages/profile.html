@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Vinyl — Perfil</title>
+
+  <link rel="stylesheet" href="profile.css" />
+  <meta name="theme-color" content="#09090d" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+</head>
+
+<body>
+
+  <div class="app-bg"></div>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <a href="home.html" class="logo">
+      <span></span>
+      VINYL
+    </a>
+
+    <nav id="navbarLinks" class="navbar-links">
+      <a href="home.html">Home</a>
+      <a href="search.html">Catálogo</a>
+      <a href="timeline.html">Timeline</a>
+      <a href="favorites.html">Favoritos</a>
+      <a href="profile.html" class="active">Perfil</a>
+    </nav>
+
+    <div class="navbar-actions">
+      <button class="logout-btn" id="logoutBtn" type="button">
+        Sair
+      </button>
+
+      <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menu">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- PROFILE PAGE -->
+  <main class="profile-page">
+
+    <!-- HERO -->
+    <section class="profile-hero">
+
+      <div class="profile-banner" id="profileBanner">
+        <div class="banner-glow"></div>
+        <div class="banner-overlay"></div>
+
+        <button class="change-banner-btn" id="changeBannerBtn" type="button">
+          Alterar capa
+        </button>
+      </div>
+
+      <div class="profile-main-info">
+
+        <div class="profile-avatar-area">
+          <div class="profile-avatar-wrap">
+            <img
+              src="https://placehold.co/300x300/111111/ff4d6d?text=VINYL"
+              alt="Foto de perfil"
+              class="profile-avatar"
+              id="profileAvatar"
+            />
+          </div>
+
+          <div class="profile-level-card">
+            <span>Nível Vinyl</span>
+            <strong>Listener</strong>
+          </div>
+        </div>
+
+        <div class="profile-info">
+          <div class="profile-topline">
+            <span class="profile-tag">Perfil musical</span>
+            <span class="profile-status-dot">Online</span>
+          </div>
+
+          <h1 id="profileDisplayName">
+            Usuário Vinyl
+          </h1>
+
+          <p class="profile-username" id="profileUsername">
+            @usuario
+          </p>
+
+          <p class="profile-bio" id="profileBio">
+            Sua bio musical aparecerá aqui.
+          </p>
+
+          <div class="profile-social-links" id="profileSocialLinks"></div>
+
+          <div class="music-identity-row">
+            <div>
+              <span>🎧 Ouvindo agora</span>
+              <strong id="currentTrackText">Nenhuma música</strong>
+            </div>
+
+            <div>
+              <span>💿 Álbum favorito</span>
+              <strong id="favoriteAlbumText">Não definido</strong>
+            </div>
+
+            <div>
+              <span>🔥 Gênero dominante</span>
+              <strong id="topGenreText">Não definido</strong>
+            </div>
+          </div>
+
+          <div class="profile-actions">
+            <button class="primary-btn" id="editProfileBtn" type="button">
+              Editar perfil
+            </button>
+
+            <button class="secondary-btn" id="favoritesBtn" type="button">
+              Favoritos
+            </button>
+
+            <a class="secondary-btn link-btn" href="music-auth.html">
+              Conectar música
+            </a>
+
+            <button class="ghost-btn" id="shareProfileBtn" type="button">
+              Compartilhar
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- MUSIC CONNECTION -->
+    <section class="connect-music-section">
+      <div class="connect-music-card">
+        <div class="connect-music-info">
+          <span class="profile-tag">Integração musical</span>
+
+          <h2>Conecte sua plataforma favorita</h2>
+
+          <p>
+            Use Spotify ou Apple Music para personalizar recomendações,
+            favoritos, compatibilidade musical e sua identidade no Vinyl.
+          </p>
+
+          <div class="connected-provider" id="connectedProviderBox">
+            <span class="provider-dot"></span>
+            <strong id="connectedProviderText">Nenhuma plataforma conectada</strong>
+          </div>
+        </div>
+
+        <div class="platform-mini-grid">
+          <a href="music-auth.html" class="mini-platform-card spotify-mini">
+            <div>
+              <strong>Spotify</strong>
+              <span>Conectar conta</span>
+            </div>
+            <b>→</b>
+          </a>
+
+          <a href="music-auth.html" class="mini-platform-card apple-mini">
+            <div>
+              <strong>Apple Music</strong>
+              <span>Em breve</span>
+            </div>
+            <b>→</b>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="profile-stats">
+      <div class="stat-card">
+        <strong id="followersCount">0</strong>
+        <span>Seguidores</span>
+      </div>
+
+      <div class="stat-card">
+        <strong id="followingCount">0</strong>
+        <span>Seguindo</span>
+      </div>
+
+      <div class="stat-card">
+        <strong id="reviewsCount">0</strong>
+        <span>Reviews</span>
+      </div>
+
+      <div class="stat-card">
+        <strong id="favoritesCount">0</strong>
+        <span>Favoritos</span>
+      </div>
+    </section>
+
+    <!-- PRIVATE WARNING -->
+    <section class="privacy-warning" id="privateProfileBox" hidden>
+      <h2>Perfil privado</h2>
+      <p>
+        Este perfil está marcado como privado. Algumas informações podem ficar ocultas para outros usuários.
+      </p>
+    </section>
+
+    <!-- TABS -->
+    <section class="profile-tabs-wrap">
+      <div class="profile-tabs">
+        <button class="active" type="button" data-tab="overview">
+          Visão geral
+        </button>
+
+        <button type="button" data-tab="favorites">
+          Favoritos
+        </button>
+
+        <button type="button" data-tab="reviews">
+          Reviews
+        </button>
+
+        <button type="button" data-tab="activity">
+          Atividade
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB: OVERVIEW -->
+    <section class="profile-tab-panel active" id="overviewTab">
+
+      <section class="profile-section" id="genresSection">
+        <div class="section-header">
+          <div>
+            <h2>Gêneros favoritos</h2>
+            <p>Os estilos que mais combinam com você.</p>
+          </div>
+        </div>
+
+        <div class="chips-list" id="favoriteGenresList">
+          <span class="empty-state">Nenhum gênero favorito ainda.</span>
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <div class="section-header">
+          <div>
+            <h2>Resumo musical</h2>
+            <p>Uma visão rápida da sua identidade sonora.</p>
+          </div>
+        </div>
+
+        <div class="music-summary-grid">
+          <article class="summary-card">
+            <span>Mais ouvido</span>
+            <strong id="summaryTopArtist">Ainda sem dados</strong>
+            <p>Seu artista mais presente no Vinyl.</p>
+          </article>
+
+          <article class="summary-card">
+            <span>Vibe atual</span>
+            <strong id="summaryMood">Descobrindo sons</strong>
+            <p>Baseado nos seus favoritos e reviews.</p>
+          </article>
+
+          <article class="summary-card">
+            <span>Compatibilidade</span>
+            <strong id="summaryCompatibility">--%</strong>
+            <p>Compare seu gosto com outros usuários.</p>
+          </article>
+        </div>
+      </section>
+
+    </section>
+
+    <!-- TAB: FAVORITES -->
+    <section class="profile-tab-panel" id="favoritesTab">
+
+      <section class="profile-section" id="artistsSection">
+        <div class="section-header">
+          <div>
+            <h2>Artistas favoritos</h2>
+            <p>Seu top de artistas no Vinyl.</p>
+          </div>
+        </div>
+
+        <div class="cards-grid" id="favoriteArtistsGrid">
+          <span class="empty-state">Nenhum artista favorito ainda.</span>
+        </div>
+      </section>
+
+      <section class="profile-section" id="albumsSection">
+        <div class="section-header">
+          <div>
+            <h2>Álbuns favoritos</h2>
+            <p>Os discos que mais representam seu gosto.</p>
+          </div>
+        </div>
+
+        <div class="cards-grid" id="favoriteAlbumsGrid">
+          <span class="empty-state">Nenhum álbum favorito ainda.</span>
+        </div>
+      </section>
+
+    </section>
+
+    <!-- TAB: REVIEWS -->
+    <section class="profile-tab-panel" id="reviewsTab">
+
+      <section class="profile-section" id="reviewsSection">
+        <div class="section-header">
+          <div>
+            <h2>Reviews</h2>
+            <p>Suas avaliações musicais publicadas.</p>
+          </div>
+        </div>
+
+        <div class="reviews-list" id="reviewsList">
+          <span class="empty-state">Nenhuma review publicada ainda.</span>
+        </div>
+      </section>
+
+    </section>
+
+    <!-- TAB: ACTIVITY -->
+    <section class="profile-tab-panel" id="activityTab">
+
+      <section class="profile-section" id="activitySection">
+        <div class="section-header">
+          <div>
+            <h2>Atividade recente</h2>
+            <p>Favoritos, reviews, follows e momentos musicais.</p>
+          </div>
+        </div>
+
+        <div class="activity-list" id="activityList">
+          <article class="activity-card">
+            <span>🎧</span>
+            <p>As atividades musicais aparecerão aqui.</p>
+          </article>
+        </div>
+      </section>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL EDITAR PERFIL -->
+  <div class="modal-overlay" id="editProfileModal" hidden>
+    <div class="modal-card">
+
+      <div class="modal-header">
+        <div>
+          <span class="profile-tag">Editar</span>
+          <h2>Editar perfil</h2>
+        </div>
+
+        <button class="modal-close" id="closeEditModalBtn" type="button">
+          ×
+        </button>
+      </div>
+
+      <form id="editProfileForm">
+
+        <div class="input-group">
+          <label for="editDisplayName">Nome de exibição</label>
+          <input
+            type="text"
+            id="editDisplayName"
+            placeholder="Seu nome"
+            maxlength="32"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editUsername">Nome de usuário</label>
+          <input
+            type="text"
+            id="editUsername"
+            placeholder="seuusuario"
+            maxlength="24"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editBannerFile">Banner do perfil</label>
+
+          <label for="editBannerFile" class="banner-upload-preview" id="editBannerPreview">
+            <span>Escolher banner</span>
+          </label>
+
+          <input
+            type="file"
+            id="editBannerFile"
+            accept="image/*"
+            hidden
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editPhotoFile">Foto de perfil</label>
+
+          <div class="upload-box">
+            <img
+              src="https://placehold.co/300x300/111111/ff4d6d?text=VINYL"
+              alt="Prévia da foto"
+              id="editPhotoPreview"
+            />
+
+            <div>
+              <strong>Enviar nova foto</strong>
+              <span>Escolha uma imagem da galeria ou câmera.</span>
+
+              <label for="editPhotoFile" class="upload-btn">
+                Escolher imagem
+              </label>
+
+              <input
+                type="file"
+                id="editPhotoFile"
+                accept="image/*"
+                hidden
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="editBio">Bio</label>
+          <textarea
+            id="editBio"
+            placeholder="Fale sobre seu gosto musical..."
+            maxlength="160"
+          ></textarea>
+
+          <div class="input-counter">
+            <span id="bioCounter">0</span>/160
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="editCurrentTrack">Música do momento</label>
+          <input
+            type="text"
+            id="editCurrentTrack"
+            placeholder="Ex: Saturn — SZA"
+            maxlength="60"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editFavoriteArtist">Artista favorito</label>
+          <input
+            type="text"
+            id="editFavoriteArtist"
+            placeholder="Ex: Frank Ocean"
+            maxlength="60"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editFavoriteAlbum">Álbum favorito</label>
+          <input
+            type="text"
+            id="editFavoriteAlbum"
+            placeholder="Ex: Blonde"
+            maxlength="60"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editTopGenre">Gênero dominante</label>
+          <input
+            type="text"
+            id="editTopGenre"
+            placeholder="Ex: R&B"
+            maxlength="40"
+          />
+        </div>
+
+        <div class="form-divider">
+          <span>Redes sociais</span>
+        </div>
+
+        <div class="input-group">
+          <label for="editX">X / Twitter</label>
+          <input
+            type="url"
+            id="editX"
+            placeholder="https://x.com/seuusuario"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editInstagram">Instagram</label>
+          <input
+            type="url"
+            id="editInstagram"
+            placeholder="https://instagram.com/seuusuario"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editFacebook">Facebook</label>
+          <input
+            type="url"
+            id="editFacebook"
+            placeholder="https://facebook.com/seuusuario"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editTikTok">TikTok</label>
+          <input
+            type="url"
+            id="editTikTok"
+            placeholder="https://tiktok.com/@seuusuario"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editYouTube">YouTube</label>
+          <input
+            type="url"
+            id="editYouTube"
+            placeholder="https://youtube.com/@seucanal"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="editWebsite">Site pessoal</label>
+          <input
+            type="url"
+            id="editWebsite"
+            placeholder="https://seusite.com"
+          />
+        </div>
+
+        <button type="submit" class="primary-btn full-btn">
+          Salvar alterações
+        </button>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PRIVACIDADE -->
+  <div class="modal-overlay" id="privacyModal" hidden>
+    <div class="modal-card">
+
+      <div class="modal-header">
+        <div>
+          <span class="profile-tag">Conta</span>
+          <h2>Privacidade</h2>
+        </div>
+
+        <button class="modal-close" id="closePrivacyModalBtn" type="button">
+          ×
+        </button>
+      </div>
+
+      <form id="privacyForm">
+
+        <div class="privacy-group-title">
+          Visibilidade
+        </div>
+
+        <label class="privacy-option">
+          <div>
+            <strong>Perfil privado</strong>
+            <span>Somente pessoas permitidas poderão ver seu perfil completo.</span>
+          </div>
+
+          <input type="checkbox" id="privateProfileToggle" />
+        </label>
+
+        <label class="privacy-option">
+          <div>
+            <strong>Aparecer na busca</strong>
+            <span>Permitir que outros usuários encontrem seu perfil pesquisando.</span>
+          </div>
+
+          <input type="checkbox" id="searchableProfileToggle" />
+        </label>
+
+        <div class="privacy-group-title">
+          Interações
+        </div>
+
+        <label class="privacy-option">
+          <div>
+            <strong>Permitir mensagens diretas</strong>
+            <span>Outros usuários poderão te enviar mensagens.</span>
+          </div>
+
+          <input type="checkbox" id="allowDirectMessagesToggle" />
+        </label>
+
+        <div class="privacy-group-title">
+          Conteúdo no perfil
+        </div>
+
+        <label class="privacy-option">
+          <div>
+            <strong>Mostrar atividade musical</strong>
+            <span>Exibir curtidas, reviews e favoritos recentes no perfil.</span>
+          </div>
+
+          <input type="checkbox" id="showActivityToggle" />
+        </label>
+
+        <label class="privacy-option">
+          <div>
+            <strong>Mostrar favoritos</strong>
+            <span>Exibir seus artistas, álbuns e gêneros favoritos.</span>
+          </div>
+
+          <input type="checkbox" id="showFavoritesToggle" />
+        </label>
+
+        <label class="privacy-option">
+          <div>
+            <strong>Mostrar reviews</strong>
+            <span>Exibir suas avaliações publicadas no perfil.</span>
+          </div>
+
+          <input type="checkbox" id="showReviewsToggle" />
+        </label>
+
+        <button type="submit" class="primary-btn full-btn">
+          Salvar privacidade
+        </button>
+
+      </form>
+
+      <section class="danger-zone" aria-labelledby="deleteAccountTitle">
+        <div>
+          <span class="profile-tag danger-tag">Zona de risco</span>
+          <h3 id="deleteAccountTitle">Excluir conta e apagar dados</h3>
+          <p>
+            Remove seu perfil, favoritos, reviews, posts, stories, seguidores,
+            chats e dados de aceite. Esta ação não pode ser desfeita.
+          </p>
+        </div>
+
+        <button type="button" class="danger-btn" id="deleteAccountBtn">
+          Excluir minha conta
+        </button>
+      </section>
+
+    </div>
+  </div>
+
+  <input type="file" id="quickBannerInput" accept="image/*" hidden />
+
+  <button class="privacy-floating-btn" id="openPrivacyModalBtn" title="Privacidade" type="button">
+    ⚙
+  </button>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="profile.js"></script>
+
+</body>
+
+</html>

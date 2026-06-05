@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Configurações — Vinyl</title>
+
+  <link rel="stylesheet" href="settings.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+
+<body>
+  <div class="app-bg"></div>
+
+  <header class="topbar">
+    <a href="home.html" class="brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-record-vinyl"></i>
+      </div>
+      <span>VINYL</span>
+    </a>
+
+    <nav class="desktop-nav">
+      <a href="home.html">Início</a>
+      <a href="search.html">Catálogo</a>
+      <a href="timeline.html">Timeline</a>
+      <a href="favorites.html">Favoritos</a>
+      <a href="profile.html">Perfil</a>
+    </nav>
+
+    <div class="topbar-actions">
+      <a href="notifications.html" class="icon-btn" title="Notificações">
+        <i class="fa-regular fa-bell"></i>
+      </a>
+
+      <a href="messages.html" class="icon-btn" title="Mensagens">
+        <i class="fa-regular fa-message"></i>
+      </a>
+
+      <button id="logoutBtn" class="logout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Sair</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="settings-page">
+    <section class="hero-card">
+      <div>
+        <p class="eyebrow">Sua conta</p>
+        <h1>Configurações</h1>
+        <p>
+          Controle privacidade, mensagens, notificações e integração com Spotify.
+        </p>
+      </div>
+
+      <div class="hero-orb">
+        <i class="fa-solid fa-gear"></i>
+      </div>
+    </section>
+
+    <section id="userMiniCard" class="user-card loading">
+      <div class="avatar-skeleton"></div>
+
+      <div class="user-info">
+        <div class="line-skeleton big"></div>
+        <div class="line-skeleton small"></div>
+      </div>
+    </section>
+
+    <section class="settings-grid">
+      <div class="settings-column">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Privacidade</p>
+              <h2>Quem pode ver você</h2>
+            </div>
+            <i class="fa-solid fa-shield-halved panel-icon"></i>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <h3>Perfil privado</h3>
+              <p>Somente seguidores aprovados poderão ver seu perfil completo.</p>
+            </div>
+
+            <label class="switch">
+              <input type="checkbox" id="privateProfile" />
+              <span></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <h3>Aparecer nas buscas</h3>
+              <p>Permite que outros usuários encontrem seu perfil pelo catálogo/social.</p>
+            </div>
+
+            <label class="switch">
+              <input type="checkbox" id="showInSearch" />
+              <span></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <h3>Mostrar atividade musical</h3>
+              <p>Mostra favoritos, reviews e atividade recente no seu perfil.</p>
+            </div>
+
+            <label class="switch">
+              <input type="checkbox" id="showActivity" />
+              <span></span>
+            </label>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Mensagens</p>
+              <h2>Controle suas DMs</h2>
+            </div>
+            <i class="fa-regular fa-message panel-icon"></i>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <h3>Aceitar mensagens diretas</h3>
+              <p>Se desligar, outros usuários não poderão iniciar conversa com você.</p>
+            </div>
+
+            <label class="switch">
+              <input type="checkbox" id="allowMessages" />
+              <span></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <h3>Mensagens apenas de seguidores</h3>
+              <p>Quando ativo, só pessoas que você segue ou que te seguem podem mandar mensagem.</p>
+            </div>
+
+            <label class="switch">
+              <input type="checkbox" id="messagesFollowersOnly" />
+              <span></span>
+            </label>
+          </div>
+        </article>
+      </div>
+
+      <div class="settings-column">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Notificações</p>
+              <h2>Alertas do Vinyl</h2>
+            </div>
+            <i class="fa-regular fa-bell panel-icon"></i>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <h3>Receber notificações</h3>
+              <p>Curtidas, respostas, reposts, mensagens e novos seguidores.</p>
+            </div>
+
+            <label class="switch">
+              <input type="checkbox" id="allowNotifications" />
+              <span></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <h3>Notificar novos seguidores</h3>
+              <p>Receba aviso quando alguém começar a seguir você.</p>
+            </div>
+
+            <label class="switch">
+              <input type="checkbox" id="notifyFollows" />
+              <span></span>
+            </label>
+          </div>
+        </article>
+
+        <article class="panel spotify-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Spotify</p>
+              <h2>Integração musical</h2>
+            </div>
+            <i class="fa-brands fa-spotify panel-icon spotify"></i>
+          </div>
+
+          <p class="panel-description">
+            Conecte sua conta Spotify para usar charts pessoais, compatibilidade musical e recomendações.
+          </p>
+
+          <div id="spotifyStatus" class="status-pill disconnected">
+            <span></span>
+            Spotify não conectado
+          </div>
+
+          <button id="spotifyConnectBtn" class="primary-btn">
+            <i class="fa-brands fa-spotify"></i>
+            Conectar Spotify
+          </button>
+
+          <button id="spotifyDisconnectBtn" class="ghost-btn hidden">
+            Desconectar Spotify
+          </button>
+        </article>
+
+        <article class="panel danger-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow danger">Segurança</p>
+              <h2>Zona sensível</h2>
+            </div>
+            <i class="fa-solid fa-triangle-exclamation panel-icon danger"></i>
+          </div>
+
+          <button id="resetPasswordBtn" class="ghost-btn">
+            <i class="fa-solid fa-key"></i>
+            Enviar redefinição de senha
+          </button>
+
+          <p class="mini-warning">
+            A exclusão definitiva da conta pode ser adicionada depois com confirmação dupla.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <div class="save-bar">
+      <div>
+        <strong id="saveStateTitle">Tudo salvo</strong>
+        <span id="saveStateText">Suas configurações estão sincronizadas.</span>
+      </div>
+
+      <button id="saveBtn" class="primary-btn">
+        <i class="fa-solid fa-floppy-disk"></i>
+        Salvar alterações
+      </button>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="home.html">
+      <i class="fa-solid fa-house"></i>
+      <span>Início</span>
+    </a>
+
+    <a href="search.html">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <span>Buscar</span>
+    </a>
+
+    <a href="timeline.html">
+      <i class="fa-solid fa-bolt"></i>
+      <span>Social</span>
+    </a>
+
+    <a href="favorites.html">
+      <i class="fa-solid fa-heart"></i>
+      <span>Favoritos</span>
+    </a>
+
+    <a href="settings.html" class="active">
+      <i class="fa-solid fa-gear"></i>
+      <span>Ajustes</span>
+    </a>
+  </nav>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="settings.js"></script>
+</body>
+</html>
