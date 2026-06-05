@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vinyl - Registro</title>
+  <script>
+    if (localStorage.getItem("vinylPrivacyAccepted") !== "true") {
+      window.location.replace("privacy-consent.html?next=register.html");
+    }
+  </script>
+  <link rel="stylesheet" href="register.css">
+</head>
+
+<body>
+  <main class="auth-page">
+    <div class="auth-background"></div>
+
+    <form class="auth-card" id="registerForm">
+      <a href="home.html" class="auth-logo">VINYL</a>
+
+      <span class="auth-tag">Crie seu perfil musical</span>
+
+      <h1>Registrar</h1>
+
+      <p>Crie sua conta com nome de usuário e senha. O e-mail é opcional.</p>
+
+      <div class="input-group">
+        <input
+          type="text"
+          id="registerName"
+          placeholder="Nome de usuário"
+          autocomplete="username"
+          minlength="3"
+          maxlength="24"
+          required
+        >
+      </div>
+
+      <small class="input-hint">
+        Use letras, números, ponto ou underline. Ex: buggyz_scott
+      </small>
+
+      <div class="input-group">
+        <input
+          type="email"
+          id="registerEmail"
+          placeholder="E-mail opcional"
+          autocomplete="email"
+        >
+      </div>
+
+      <small class="input-hint">
+        O e-mail serve para recuperação de senha. Você pode deixar em branco.
+      </small>
+
+      <div class="input-group password-group">
+        <input
+          type="password"
+          id="registerPassword"
+          placeholder="Crie uma senha"
+          autocomplete="new-password"
+          minlength="6"
+          required
+        >
+
+        <button 
+          type="button" 
+          class="toggle-password" 
+          data-target="registerPassword"
+          aria-label="Mostrar ou ocultar senha"
+        >
+          👁
+        </button>
+      </div>
+
+      <div class="password-strength" id="passwordStrength">
+        <div class="strength-bars">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <small id="passwordStrengthText">
+          A senha precisa ter pelo menos 6 caracteres.
+        </small>
+      </div>
+
+      <button type="submit" class="auth-btn">
+        Criar conta
+      </button>
+
+      <div class="auth-divider">
+        <span>ou</span>
+      </div>
+
+      <button type="button" id="googleAuthBtn" class="google-auth-btn">
+        Criar conta com Google
+      </button>
+
+      <div class="auth-footer">
+        <span>Já possui conta?</span>
+        <a href="login.html">Entrar</a>
+      </div>
+      <a href="privacy-consent.html?next=register.html" class="privacy-link">
+        Privacidade e termos
+      </a>
+    </form>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="auth.js"></script>
+</body>
+</html>
