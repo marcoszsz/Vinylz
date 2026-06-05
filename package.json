@@ -6,15 +6,21 @@
   "author": "buggyz",
   "license": "MIT",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron .",
-    "build": "electron-builder --win",
-    "build:portable": "electron-builder --win portable"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron": "electron .",
+    "electron:build": "electron-builder --win",
+    "electron:portable": "electron-builder --win portable"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.1",
     "firebase": "^12.12.1",
     "vercel": "^54.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.7",
+    "vite": "^8.0.16"
   }
 }
