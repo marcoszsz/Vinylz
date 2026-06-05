@@ -27,7 +27,11 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-/* ELEMENTOS */
+/* =========================
+   ELEMENTOS
+========================= */
+
+const body = document.body;
 
 const navbarLinks = document.getElementById("navbarLinks");
 const mobileMenuBtn = document.getElementById("mobileMenuBtn");
@@ -111,7 +115,13 @@ const deleteAccountBtn = document.getElementById("deleteAccountBtn");
 
 const toast = document.getElementById("toast");
 
-/* ESTADO */
+const connectedProviderBox = document.getElementById("connectedProviderBox");
+const connectedProviderText = document.getElementById("connectedProviderText");
+const providerDot = document.querySelector(".provider-dot");
+
+/* =========================
+   ESTADO
+========================= */
 
 let currentUser = null;
 let currentUserData = null;
@@ -122,21 +132,28 @@ const fallbackAvatar = "https://placehold.co/300x300/111111/ff4d6d?text=VINYL";
 const fallbackBanner = "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1600&q=80";
 const fallbackCover = "https://placehold.co/300x300/111111/ff4d6d?text=♪";
 
-/* HELPERS */
+/* =========================
+   HELPERS
+========================= */
 
 function showToast(message) {
-  if (!toast) return;
+  if (!toast) {
+    console.log(message);
+    return;
+  }
 
   toast.textContent = message;
   toast.classList.add("show");
 
-  setTimeout(() => {
+  clearTimeout(showToast._timer);
+
+  showToast._timer = setTimeout(() => {
     toast.classList.remove("show");
   }, 2800);
 }
 
 function safeText(value, fallback = "") {
-  return String(value || fallback)
+  return String(value ?? fallback)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -144,19 +161,33 @@ function safeText(value, fallback = "") {
     .replaceAll("'", "&#039;");
 }
 
+function safeValue(value, fallback = "") {
+  return String(value ?? fallback);
+}
+
+function setText(element, value, fallback = "") {
+  if (!element) return;
+  element.textContent = value || fallback;
+}
+
+function setInputValue(element, value = "") {
+  if (!element) return;
+  element.value = value || "";
+}
+
 function setBannerImage(url) {
   const bannerUrl = url || fallbackBanner;
 
   if (profileBanner) {
     profileBanner.style.backgroundImage = `
-      linear-gradient(135deg, rgba(255, 63, 127, .42), rgba(255, 45, 85, .10)),
+      linear-gradient(135deg, rgba(255, 47, 125, .42), rgba(255, 45, 85, .10)),
       url("${bannerUrl}")
     `;
   }
 
   if (editBannerPreview) {
     editBannerPreview.style.backgroundImage = `
-      linear-gradient(135deg, rgba(255, 63, 127, .28), rgba(255, 45, 85, .08)),
+      linear-gradient(135deg, rgba(255, 47, 125, .28), rgba(255, 45, 85, .08)),
       url("${bannerUrl}")
     `;
   }
@@ -213,11 +244,48 @@ function formatDate(timestamp) {
   if (!timestamp) return "agora";
 
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  return date.toLocaleDateString("pt-BR");
+
+  if (Number.isNaN(date.getTime())) {
+    return "agora";
+  }
+
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+}
+
+function openModal(modal) {
+  if (!modal) return;
+  modal.hidden = false;
+  body?.classList.add("modal-open");
+}
+
+function closeModal(modal) {
+  if (!modal) return;
+  modal.hidden = true;
+
+  const anyOpenModal = document.querySelector(".modal-overlay:not([hidden])");
+
+  if (!anyOpenModal) {
+    body?.classList.remove("modal-open");
+  }
 }
 
 async function uploadImage(file, folder) {
   if (!file || !currentUser) return null;
+
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Arquivo inválido. Envie uma imagem.");
+  }
+
+  const maxSizeMB = 6;
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+  if (file.size > maxSizeBytes) {
+    throw new Error(`Imagem muito pesada. Use até ${maxSizeMB}MB.`);
+  }
 
   const extension = file.name.split(".").pop() || "jpg";
   const fileName = `${Date.now()}-${Math.random().toString(16).slice(2)}.${extension}`;
@@ -228,10 +296,18 @@ async function uploadImage(file, folder) {
   return await getDownloadURL(storageRef);
 }
 
-/* NAVBAR */
+/* =========================
+   NAVBAR
+========================= */
 
 mobileMenuBtn?.addEventListener("click", () => {
   navbarLinks?.classList.toggle("open");
+});
+
+navbarLinks?.querySelectorAll("a").forEach((link) => {
+  link.addEventListener("click", () => {
+    navbarLinks.classList.remove("open");
+  });
 });
 
 logoutBtn?.addEventListener("click", async () => {
@@ -239,12 +315,14 @@ logoutBtn?.addEventListener("click", async () => {
     await signOut(auth);
     window.location.href = "login.html";
   } catch (error) {
-    console.error(error);
+    console.error("Erro ao sair:", error);
     showToast("Erro ao sair da conta.");
   }
 });
 
-/* AUTH */
+/* =========================
+   AUTH
+========================= */
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -258,23 +336,37 @@ onAuthStateChanged(auth, async (user) => {
   await loadUserContent();
 });
 
-/* LOAD PROFILE */
+/* =========================
+   LOAD PROFILE
+========================= */
 
 async function loadProfile() {
+  if (!currentUser) return;
+
   try {
     const userRef = doc(db, "users", currentUser.uid);
     const userSnap = await getDoc(userRef);
 
+    const localProvider = localStorage.getItem("vinyl_music_provider") || "none";
+
     if (!userSnap.exists()) {
       currentUserData = {
+        uid: currentUser.uid,
         displayName: currentUser.displayName || "Usuário Vinyl",
-        username: currentUser.email?.split("@")[0] || "usuario",
+        username: normalizeUsername(currentUser.email?.split("@")[0] || "usuario"),
+        usernameLower: normalizeUsername(currentUser.email?.split("@")[0] || "usuario"),
+        email: currentUser.email || "",
         photoURL: currentUser.photoURL || "",
         bannerURL: "",
         bio: "",
+        currentTrack: "",
+        favoriteArtist: "",
+        favoriteAlbum: "",
+        topGenre: "",
         favoriteGenres: [],
         favoriteArtists: [],
         favoriteAlbums: [],
+        musicProvider: localProvider,
         socialLinks: {
           x: "",
           instagram: "",
@@ -291,15 +383,33 @@ async function loadProfile() {
           showReviews: true,
           searchableProfile: true
         },
-        createdAt: serverTimestamp()
+        followers: [],
+        following: [],
+        followersCount: 0,
+        followingCount: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       };
 
       await setDoc(userRef, currentUserData, { merge: true });
     } else {
-      currentUserData = userSnap.data();
+      currentUserData = {
+        uid: currentUser.uid,
+        ...userSnap.data()
+      };
+
+      if (localProvider && localProvider !== "none" && currentUserData.musicProvider !== localProvider) {
+        currentUserData.musicProvider = localProvider;
+
+        await updateDoc(userRef, {
+          musicProvider: localProvider,
+          updatedAt: serverTimestamp()
+        });
+      }
     }
 
     renderProfile();
+    renderMusicProvider();
     fillEditModal();
     fillPrivacyModal();
   } catch (error) {
@@ -309,50 +419,46 @@ async function loadProfile() {
 }
 
 function renderProfile() {
+  if (!currentUserData) return;
+
   const displayName = getDisplayName(currentUserData);
   const username = getUsername(currentUserData);
   const avatar = getAvatar(currentUserData);
   const banner = currentUserData?.bannerURL || currentUserData?.banner || fallbackBanner;
 
-  if (profileAvatar) profileAvatar.src = avatar;
-  if (profileDisplayName) profileDisplayName.textContent = displayName;
-  if (profileUsername) profileUsername.textContent = `@${username}`;
-
-  if (profileBio) {
-    profileBio.textContent = currentUserData?.bio || "Sua bio musical aparecerá aqui.";
+  if (profileAvatar) {
+    profileAvatar.src = avatar;
+    profileAvatar.onerror = () => {
+      profileAvatar.src = fallbackAvatar;
+    };
   }
+
+  setText(profileDisplayName, displayName, "Usuário Vinyl");
+  setText(profileUsername, `@${username}`, "@usuario");
+  setText(profileBio, currentUserData?.bio, "Sua bio musical aparecerá aqui.");
 
   setBannerImage(banner);
   renderSocialLinks();
 
-  if (currentTrackText) {
-    currentTrackText.textContent = currentUserData?.currentTrack || "Nenhuma música";
-  }
+  setText(currentTrackText, currentUserData?.currentTrack, "Nenhuma música");
+  setText(favoriteAlbumText, currentUserData?.favoriteAlbum, "Não definido");
+  setText(topGenreText, currentUserData?.topGenre, "Não definido");
 
-  if (favoriteAlbumText) {
-    favoriteAlbumText.textContent = currentUserData?.favoriteAlbum || "Não definido";
-  }
+  const followersTotal =
+    currentUserData?.followersCount ?? countArray(currentUserData?.followers);
 
-  if (topGenreText) {
-    topGenreText.textContent = currentUserData?.topGenre || "Não definido";
-  }
+  const followingTotal =
+    currentUserData?.followingCount ?? countArray(currentUserData?.following);
 
-  if (followersCount) {
-    followersCount.textContent =
-      currentUserData?.followersCount ?? countArray(currentUserData?.followers);
-  }
-
-  if (followingCount) {
-    followingCount.textContent =
-      currentUserData?.followingCount ?? countArray(currentUserData?.following);
-  }
+  setText(followersCount, followersTotal, "0");
+  setText(followingCount, followingTotal, "0");
 
   const favoriteTotal =
     countArray(currentUserData?.favoriteArtists) +
     countArray(currentUserData?.favoriteAlbums) +
     countArray(currentUserData?.favoriteGenres);
 
-  if (favoritesCount) favoritesCount.textContent = favoriteTotal;
+  setText(favoritesCount, favoriteTotal, "0");
 
   const privateProfile = Boolean(currentUserData?.privacy?.privateProfile);
 
@@ -364,28 +470,77 @@ function renderProfile() {
   renderArtists(currentUserData?.favoriteArtists || []);
   renderAlbums(currentUserData?.favoriteAlbums || []);
 
-  if (summaryTopArtist) {
-    summaryTopArtist.textContent =
-      currentUserData?.favoriteArtist ||
+  setText(
+    summaryTopArtist,
+    currentUserData?.favoriteArtist ||
       currentUserData?.favoriteArtists?.[0]?.name ||
-      currentUserData?.favoriteArtists?.[0] ||
-      "Ainda sem dados";
-  }
+      currentUserData?.favoriteArtists?.[0],
+    "Ainda sem dados"
+  );
 
-  if (summaryMood) {
-    summaryMood.textContent = currentUserData?.topGenre
-      ? `Vibe ${currentUserData.topGenre}`
-      : "Descobrindo sons";
-  }
+  setText(
+    summaryMood,
+    currentUserData?.topGenre ? `Vibe ${currentUserData.topGenre}` : "Descobrindo sons",
+    "Descobrindo sons"
+  );
 
-  if (summaryCompatibility) {
-    summaryCompatibility.textContent = currentUserData?.compatibilityScore
-      ? `${currentUserData.compatibilityScore}%`
-      : "--%";
-  }
+  setText(
+    summaryCompatibility,
+    currentUserData?.compatibilityScore ? `${currentUserData.compatibilityScore}%` : "--%",
+    "--%"
+  );
 }
 
-/* SOCIAL LINKS */
+/* =========================
+   MUSIC PROVIDER
+========================= */
+
+function getMusicProvider() {
+  return currentUserData?.musicProvider || localStorage.getItem("vinyl_music_provider") || "none";
+}
+
+function renderMusicProvider() {
+  const provider = getMusicProvider();
+
+  if (!connectedProviderText) return;
+
+  if (connectedProviderBox) {
+    connectedProviderBox.dataset.provider = provider;
+  }
+
+  if (providerDot) {
+    providerDot.style.background = "#747484";
+    providerDot.style.boxShadow = "none";
+  }
+
+  if (provider === "spotify") {
+    connectedProviderText.textContent = "Spotify conectado";
+
+    if (providerDot) {
+      providerDot.style.background = "#1ed760";
+      providerDot.style.boxShadow = "0 0 16px rgba(30, 215, 96, .8)";
+    }
+
+    return;
+  }
+
+  if (provider === "apple_music") {
+    connectedProviderText.textContent = "Apple Music selecionado";
+
+    if (providerDot) {
+      providerDot.style.background = "#f5f5f7";
+      providerDot.style.boxShadow = "0 0 16px rgba(255, 255, 255, .65)";
+    }
+
+    return;
+  }
+
+  connectedProviderText.textContent = "Nenhuma plataforma conectada";
+}
+
+/* =========================
+   SOCIAL LINKS
+========================= */
 
 function renderSocialLinks() {
   if (!profileSocialLinks) return;
@@ -452,23 +607,25 @@ function renderSocialLinks() {
   `).join("");
 }
 
-/* FAVORITES */
+/* =========================
+   FAVORITES
+========================= */
 
 function renderGenres(genres) {
   if (!favoriteGenresList) return;
 
-  if (!genres.length) {
+  if (!Array.isArray(genres) || !genres.length) {
     favoriteGenresList.innerHTML = `<span class="empty-state">Nenhum gênero favorito ainda.</span>`;
     return;
   }
 
   favoriteGenresList.innerHTML = genres.map((genre) => {
-    const name = typeof genre === "string" ? genre : genre.name;
-    const icon = typeof genre === "object" && genre.icon ? genre.icon : "🎧";
+    const name = typeof genre === "string" ? genre : genre?.name;
+    const icon = typeof genre === "object" && genre?.icon ? genre.icon : "🎧";
 
     return `
       <span class="genre-chip">
-        ${safeText(icon)} ${safeText(name)}
+        ${safeText(icon)} ${safeText(name || "Gênero")}
       </span>
     `;
   }).join("");
@@ -477,7 +634,7 @@ function renderGenres(genres) {
 function renderArtists(artists) {
   if (!favoriteArtistsGrid) return;
 
-  if (!artists.length) {
+  if (!Array.isArray(artists) || !artists.length) {
     favoriteArtistsGrid.innerHTML = `<span class="empty-state">Nenhum artista favorito ainda.</span>`;
     return;
   }
@@ -485,13 +642,18 @@ function renderArtists(artists) {
   favoriteArtistsGrid.innerHTML = artists.map((artist, index) => {
     const item = typeof artist === "string"
       ? { name: artist, image: fallbackCover, subtitle: "Artista" }
-      : artist;
+      : artist || {};
 
     return `
       <article class="music-card">
         <span class="music-card-rank">#${index + 1}</span>
 
-        <img src="${safeText(item.image || item.photoURL || fallbackCover)}" alt="${safeText(item.name || "Artista")}">
+        <img
+          src="${safeText(item.image || item.photoURL || item.cover || fallbackCover)}"
+          alt="${safeText(item.name || "Artista")}"
+          loading="lazy"
+          onerror="this.src='${fallbackCover}'"
+        >
 
         <div class="music-card-body">
           <strong>${safeText(item.name || "Artista")}</strong>
@@ -505,7 +667,7 @@ function renderArtists(artists) {
 function renderAlbums(albums) {
   if (!favoriteAlbumsGrid) return;
 
-  if (!albums.length) {
+  if (!Array.isArray(albums) || !albums.length) {
     favoriteAlbumsGrid.innerHTML = `<span class="empty-state">Nenhum álbum favorito ainda.</span>`;
     return;
   }
@@ -513,13 +675,18 @@ function renderAlbums(albums) {
   favoriteAlbumsGrid.innerHTML = albums.map((album, index) => {
     const item = typeof album === "string"
       ? { name: album, image: fallbackCover, subtitle: "Álbum" }
-      : album;
+      : album || {};
 
     return `
       <article class="music-card">
         <span class="music-card-rank">#${index + 1}</span>
 
-        <img src="${safeText(item.image || item.cover || fallbackCover)}" alt="${safeText(item.name || "Álbum")}">
+        <img
+          src="${safeText(item.image || item.cover || item.photoURL || fallbackCover)}"
+          alt="${safeText(item.name || item.title || "Álbum")}"
+          loading="lazy"
+          onerror="this.src='${fallbackCover}'"
+        >
 
         <div class="music-card-body">
           <strong>${safeText(item.name || item.title || "Álbum")}</strong>
@@ -530,10 +697,12 @@ function renderAlbums(albums) {
   }).join("");
 }
 
-/* CONTENT */
+/* =========================
+   CONTENT
+========================= */
 
 async function loadUserContent() {
-  await Promise.all([
+  await Promise.allSettled([
     loadReviews(),
     loadActivity()
   ]);
@@ -557,16 +726,17 @@ async function loadReviews() {
       ...docSnap.data()
     }));
 
-    if (reviewsCount) {
-      reviewsCount.textContent = reviews.length;
-    }
-
+    setText(reviewsCount, reviews.length, "0");
     renderReviews(reviews);
   } catch (error) {
     console.warn("Erro ao carregar reviews:", error);
 
+    setText(reviewsCount, "0");
+
     reviewsList.innerHTML = `
-      <span class="empty-state">Nenhuma review publicada ainda.</span>
+      <span class="empty-state">
+        Nenhuma review publicada ainda.
+      </span>
     `;
   }
 }
@@ -574,7 +744,7 @@ async function loadReviews() {
 function renderReviews(reviews) {
   if (!reviewsList) return;
 
-  if (!reviews.length) {
+  if (!Array.isArray(reviews) || !reviews.length) {
     reviewsList.innerHTML = `
       <span class="empty-state">Nenhuma review publicada ainda.</span>
     `;
@@ -582,20 +752,26 @@ function renderReviews(reviews) {
   }
 
   reviewsList.innerHTML = reviews.map((review) => {
-    const rating = Number(review.rating || 0);
+    const rating = Math.max(0, Math.min(5, Number(review.rating || 0)));
     const stars = "★★★★★".slice(0, rating).padEnd(5, "☆");
 
     return `
       <article class="review-card">
-        <img src="${safeText(review.cover || review.image || fallbackCover)}" alt="${safeText(review.title || "Review")}">
+        <img
+          src="${safeText(review.cover || review.image || fallbackCover)}"
+          alt="${safeText(review.title || "Review")}"
+          loading="lazy"
+          onerror="this.src='${fallbackCover}'"
+        >
 
         <div class="review-card-content">
-          <span>Review · ${formatDate(review.createdAt)}</span>
-          <h3>${safeText(review.title || review.albumName || "Review musical")}</h3>
+          <span>Review · ${safeText(formatDate(review.createdAt))}</span>
+
+          <h3>${safeText(review.title || review.albumName || review.itemName || "Review musical")}</h3>
 
           <div class="rating">${safeText(stars)}</div>
 
-          <p>${safeText(review.text || review.content || "Sem texto.")}</p>
+          <p>${safeText(review.text || review.content || review.reviewText || "Sem texto.")}</p>
 
           <div class="review-actions">
             <button type="button">♡ Curtir</button>
@@ -641,7 +817,7 @@ async function loadActivity() {
 function renderActivity(activities) {
   if (!activityList) return;
 
-  if (!activities.length) {
+  if (!Array.isArray(activities) || !activities.length) {
     activityList.innerHTML = `
       <article class="activity-card">
         <span>🎧</span>
@@ -669,13 +845,16 @@ function getActivityIcon(type) {
     review: "⭐",
     follow: "👤",
     listen: "🎧",
-    repost: "🔁"
+    repost: "🔁",
+    comment: "💬"
   };
 
   return icons[type] || "🎧";
 }
 
-/* TABS */
+/* =========================
+   TABS
+========================= */
 
 const tabButtons = document.querySelectorAll(".profile-tabs button");
 const tabPanels = document.querySelectorAll(".profile-tab-panel");
@@ -693,22 +872,22 @@ tabButtons.forEach((button) => {
 });
 
 favoritesBtn?.addEventListener("click", () => {
-  document.querySelector('[data-tab="favorites"]')?.click();
+  window.location.href = "favorites.html";
 });
 
-/* EDIT MODAL */
+/* =========================
+   EDIT MODAL
+========================= */
 
 function openEditModal() {
   if (!editProfileModal) return;
 
   fillEditModal();
-  editProfileModal.hidden = false;
+  openModal(editProfileModal);
 }
 
 function closeEditModal() {
-  if (!editProfileModal) return;
-
-  editProfileModal.hidden = true;
+  closeModal(editProfileModal);
 }
 
 editProfileBtn?.addEventListener("click", openEditModal);
@@ -723,39 +902,34 @@ editProfileModal?.addEventListener("click", (event) => {
 function fillEditModal() {
   if (!currentUserData) return;
 
-  if (editDisplayName) editDisplayName.value = getDisplayName(currentUserData);
-  if (editUsername) editUsername.value = getUsername(currentUserData);
-  if (editBio) editBio.value = currentUserData.bio || "";
-  if (bioCounter) bioCounter.textContent = editBio?.value.length || 0;
+  setInputValue(editDisplayName, getDisplayName(currentUserData));
+  setInputValue(editUsername, getUsername(currentUserData));
+  setInputValue(editBio, currentUserData.bio || "");
+
+  if (bioCounter) {
+    bioCounter.textContent = editBio?.value.length || 0;
+  }
 
   if (editPhotoPreview) {
     editPhotoPreview.src = getAvatar(currentUserData);
+    editPhotoPreview.onerror = () => {
+      editPhotoPreview.src = fallbackAvatar;
+    };
   }
 
-  if (editCurrentTrack) {
-    editCurrentTrack.value = currentUserData.currentTrack || "";
-  }
-
-  if (editFavoriteArtist) {
-    editFavoriteArtist.value = currentUserData.favoriteArtist || "";
-  }
-
-  if (editFavoriteAlbum) {
-    editFavoriteAlbum.value = currentUserData.favoriteAlbum || "";
-  }
-
-  if (editTopGenre) {
-    editTopGenre.value = currentUserData.topGenre || "";
-  }
+  setInputValue(editCurrentTrack, currentUserData.currentTrack || "");
+  setInputValue(editFavoriteArtist, currentUserData.favoriteArtist || "");
+  setInputValue(editFavoriteAlbum, currentUserData.favoriteAlbum || "");
+  setInputValue(editTopGenre, currentUserData.topGenre || "");
 
   const socialLinks = currentUserData?.socialLinks || {};
 
-  if (editX) editX.value = socialLinks.x || "";
-  if (editInstagram) editInstagram.value = socialLinks.instagram || "";
-  if (editFacebook) editFacebook.value = socialLinks.facebook || "";
-  if (editTikTok) editTikTok.value = socialLinks.tiktok || "";
-  if (editYouTube) editYouTube.value = socialLinks.youtube || "";
-  if (editWebsite) editWebsite.value = socialLinks.website || "";
+  setInputValue(editX, socialLinks.x || "");
+  setInputValue(editInstagram, socialLinks.instagram || "");
+  setInputValue(editFacebook, socialLinks.facebook || "");
+  setInputValue(editTikTok, socialLinks.tiktok || "");
+  setInputValue(editYouTube, socialLinks.youtube || "");
+  setInputValue(editWebsite, socialLinks.website || "");
 
   setBannerImage(currentUserData.bannerURL || currentUserData.banner || fallbackBanner);
 }
@@ -775,6 +949,12 @@ editPhotoFile?.addEventListener("change", () => {
 
   if (!file) return;
 
+  if (!file.type.startsWith("image/")) {
+    showToast("Escolha uma imagem válida.");
+    editPhotoFile.value = "";
+    return;
+  }
+
   selectedPhotoFile = file;
 
   const previewURL = URL.createObjectURL(file);
@@ -789,13 +969,19 @@ editBannerFile?.addEventListener("change", () => {
 
   if (!file) return;
 
+  if (!file.type.startsWith("image/")) {
+    showToast("Escolha uma imagem válida.");
+    editBannerFile.value = "";
+    return;
+  }
+
   selectedBannerFile = file;
 
   const previewURL = URL.createObjectURL(file);
 
   if (editBannerPreview) {
     editBannerPreview.style.backgroundImage = `
-      linear-gradient(135deg, rgba(255, 63, 127, .28), rgba(255, 45, 85, .08)),
+      linear-gradient(135deg, rgba(255, 47, 125, .28), rgba(255, 45, 85, .08)),
       url("${previewURL}")
     `;
   }
@@ -804,11 +990,11 @@ editBannerFile?.addEventListener("change", () => {
 editProfileForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (!currentUser) return;
+  if (!currentUser || !currentUserData) return;
 
-  const displayNameValue = editDisplayName.value.trim();
-  const usernameValue = normalizeUsername(editUsername.value);
-  const bioValue = editBio.value.trim();
+  const displayNameValue = editDisplayName?.value.trim() || "";
+  const usernameValue = normalizeUsername(editUsername?.value);
+  const bioValue = editBio?.value.trim() || "";
 
   if (!displayNameValue) {
     showToast("Digite um nome de exibição.");
@@ -839,8 +1025,12 @@ editProfileForm?.addEventListener("submit", async (event) => {
   }
 
   const submitBtn = editProfileForm.querySelector("button[type='submit']");
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Salvando...";
+  const oldSubmitText = submitBtn?.textContent || "Salvar alterações";
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Salvando...";
+  }
 
   try {
     let photoURL = currentUserData?.photoURL || currentUserData?.avatar || "";
@@ -861,10 +1051,10 @@ editProfileForm?.addEventListener("submit", async (event) => {
       bio: bioValue,
       photoURL,
       bannerURL,
-      currentTrack: editCurrentTrack.value.trim(),
-      favoriteArtist: editFavoriteArtist.value.trim(),
-      favoriteAlbum: editFavoriteAlbum.value.trim(),
-      topGenre: editTopGenre.value.trim(),
+      currentTrack: editCurrentTrack?.value.trim() || "",
+      favoriteArtist: editFavoriteArtist?.value.trim() || "",
+      favoriteAlbum: editFavoriteAlbum?.value.trim() || "",
+      topGenre: editTopGenre?.value.trim() || "",
       socialLinks,
       updatedAt: serverTimestamp()
     };
@@ -879,19 +1069,35 @@ editProfileForm?.addEventListener("submit", async (event) => {
     selectedPhotoFile = null;
     selectedBannerFile = null;
 
+    if (editPhotoFile) editPhotoFile.value = "";
+    if (editBannerFile) editBannerFile.value = "";
+
     renderProfile();
+    renderMusicProvider();
     closeEditModal();
+
     showToast("Perfil atualizado!");
   } catch (error) {
     console.error("Erro ao salvar perfil:", error);
-    showToast("Não foi possível salvar o perfil.");
+
+    if (String(error?.message || "").includes("Imagem muito pesada")) {
+      showToast(error.message);
+    } else if (String(error?.message || "").includes("Arquivo inválido")) {
+      showToast(error.message);
+    } else {
+      showToast("Não foi possível salvar o perfil.");
+    }
   } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Salvar alterações";
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = oldSubmitText;
+    }
   }
 });
 
-/* QUICK BANNER */
+/* =========================
+   QUICK BANNER
+========================= */
 
 changeBannerBtn?.addEventListener("click", () => {
   quickBannerInput?.click();
@@ -901,6 +1107,12 @@ quickBannerInput?.addEventListener("change", async () => {
   const file = quickBannerInput.files?.[0];
 
   if (!file || !currentUser) return;
+
+  if (!file.type.startsWith("image/")) {
+    showToast("Escolha uma imagem válida.");
+    quickBannerInput.value = "";
+    return;
+  }
 
   try {
     showToast("Enviando banner...");
@@ -921,23 +1133,30 @@ quickBannerInput?.addEventListener("change", async () => {
     showToast("Banner atualizado!");
   } catch (error) {
     console.error("Erro ao trocar banner:", error);
-    showToast("Não foi possível atualizar o banner.");
+
+    if (String(error?.message || "").includes("Imagem muito pesada")) {
+      showToast(error.message);
+    } else {
+      showToast("Não foi possível atualizar o banner.");
+    }
+  } finally {
+    quickBannerInput.value = "";
   }
 });
 
-/* PRIVACY */
+/* =========================
+   PRIVACY
+========================= */
 
 function openPrivacyModal() {
   if (!privacyModal) return;
 
   fillPrivacyModal();
-  privacyModal.hidden = false;
+  openModal(privacyModal);
 }
 
 function closePrivacyModal() {
-  if (!privacyModal) return;
-
-  privacyModal.hidden = true;
+  closeModal(privacyModal);
 }
 
 openPrivacyModalBtn?.addEventListener("click", openPrivacyModal);
@@ -980,7 +1199,7 @@ function fillPrivacyModal() {
 privacyForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (!currentUser) return;
+  if (!currentUser || !currentUserData) return;
 
   const updates = {
     privacy: {
@@ -994,6 +1213,14 @@ privacyForm?.addEventListener("submit", async (event) => {
     updatedAt: serverTimestamp()
   };
 
+  const submitBtn = privacyForm.querySelector("button[type='submit']");
+  const oldSubmitText = submitBtn?.textContent || "Salvar privacidade";
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Salvando...";
+  }
+
   try {
     await updateDoc(doc(db, "users", currentUser.uid), updates);
 
@@ -1004,14 +1231,22 @@ privacyForm?.addEventListener("submit", async (event) => {
 
     renderProfile();
     closePrivacyModal();
+
     showToast("Privacidade atualizada!");
   } catch (error) {
     console.error("Erro ao salvar privacidade:", error);
     showToast("Não foi possível salvar a privacidade.");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = oldSubmitText;
+    }
   }
 });
 
-/* SHARE */
+/* =========================
+   SHARE
+========================= */
 
 shareProfileBtn?.addEventListener("click", async () => {
   const username = getUsername(currentUserData);
@@ -1024,16 +1259,20 @@ shareProfileBtn?.addEventListener("click", async () => {
         text: "Olha meu perfil musical no Vinyl!",
         url
       });
-    } else {
+    } else if (navigator.clipboard) {
       await navigator.clipboard.writeText(url);
       showToast("Link do perfil copiado!");
+    } else {
+      showToast(url);
     }
   } catch (error) {
-    console.warn(error);
+    console.warn("Compartilhamento cancelado ou falhou:", error);
   }
 });
 
-/* DELETE ACCOUNT */
+/* =========================
+   DELETE ACCOUNT
+========================= */
 
 deleteAccountBtn?.addEventListener("click", async () => {
   if (!currentUser) return;
@@ -1057,6 +1296,37 @@ deleteAccountBtn?.addEventListener("click", async () => {
   } catch (error) {
     console.error("Erro ao excluir conta:", error);
 
-    showToast("Erro ao excluir. Faça login novamente e tente de novo.");
+    if (error?.code === "auth/requires-recent-login") {
+      showToast("Faça login novamente para excluir a conta.");
+    } else {
+      showToast("Erro ao excluir. Faça login novamente e tente de novo.");
+    }
   }
 });
+
+/* =========================
+   GLOBAL EVENTS
+========================= */
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+
+  if (editProfileModal && !editProfileModal.hidden) {
+    closeEditModal();
+  }
+
+  if (privacyModal && !privacyModal.hidden) {
+    closePrivacyModal();
+  }
+});
+
+/* =========================
+   DEBUG LEVE
+========================= */
+
+window.vinylProfileDebug = {
+  getCurrentUser: () => currentUser,
+  getCurrentUserData: () => currentUserData,
+  reloadProfile: loadProfile,
+  renderMusicProvider
+};

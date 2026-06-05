@@ -1,15 +1,8 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { auth } from "./firebase.js";
 
 import {
-  getAuth,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-/* COLOQUE A MESMA CONFIG DO SEU auth.js */
-
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
 const logoutBtn = document.getElementById("logoutBtn");
 

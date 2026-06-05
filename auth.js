@@ -1,37 +1,21 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { auth, db } from "./firebase.js";
 
 import {
-  getAuth,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
   sendPasswordResetEmail,
-  onAuthStateChanged
+  onAuthStateChanged,
+  updateProfile
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  limit
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-/* CONFIG DO FIREBASE */
-const firebaseConfig = {
-  apiKey: "AIzaSyCSpkdZnlh4sr5vm0w-QC9poiU4e2uAS2M",
-  authDomain: "vinyl-4b187.firebaseapp.com",
-  projectId: "vinyl-4b187",
-  storageBucket: "vinyl-4b187.firebasestorage.app",
-  messagingSenderId: "155456309182",
-  appId: "1:155456309182:web:451a778d4110630c421bef",
-  measurementId: "G-JHM9MGEZX1"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 /* ELEMENTOS */
@@ -42,6 +26,13 @@ const googleBtn = document.getElementById("googleLogin");
 const togglePassword = document.getElementById("togglePassword");
 const errorMessage = document.getElementById("errorMessage");
 const successMessage = document.getElementById("successMessage");
+
+const registerForm = document.getElementById("registerForm");
+const registerNameInput = document.getElementById("registerName");
+const registerEmailInput = document.getElementById("registerEmail");
+const registerPasswordInput = document.getElementById("registerPassword");
+const googleAuthBtn = document.getElementById("googleAuthBtn");
+const passwordStrengthText = document.getElementById("passwordStrengthText");
 
 /* MENSAGENS */
 function showError(message) {
@@ -86,11 +77,11 @@ function getAuthErrorMessage(error) {
 
   switch (code) {
     case "auth/invalid-email":
-      return "E-mail inválido.";
+      return "E-mail invalido.";
     case "auth/user-disabled":
       return "Essa conta foi desativada.";
     case "auth/user-not-found":
-      return "Conta não encontrada.";
+      return "Conta nao encontrada.";
     case "auth/wrong-password":
       return "Senha incorreta.";
     case "auth/invalid-credential":
@@ -100,37 +91,109 @@ function getAuthErrorMessage(error) {
     case "auth/popup-closed-by-user":
       return "Login com Google cancelado.";
     case "auth/network-request-failed":
-      return "Erro de conexão. Verifique sua internet.";
+      return "Erro de conexao. Verifique sua internet.";
     case "auth/api-key-not-valid.-please-pass-a-valid-api-key.":
-      return "A API Key do Firebase está inválida. Confira o firebaseConfig.";
+      return "A API Key do Firebase esta invalida. Confira o firebaseConfig.";
     default:
       return "Erro ao entrar. Tente novamente.";
   }
 }
 
-/* ENTRAR COM E-MAIL OU USUÁRIO */
-async function getEmailFromUsername(username) {
-  const usersRef = collection(db, "users");
+function normalizeUsername(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^@+/, "")
+    .replace(/[^a-z0-9._]/g, "");
+}
 
-  const usernameQuery = query(
-    usersRef,
-    where("username", "==", username),
-    limit(1)
+function buildAuthEmail(username) {
+  return `${username}@users.vinyl.local`;
+}
+
+async function getUsernameDoc(username) {
+  const usernameLower = normalizeUsername(username);
+
+  if (!usernameLower) return null;
+
+  const usernameRef = doc(db, "usernames", usernameLower);
+  const snapshot = await getDoc(usernameRef);
+
+  return snapshot.exists() ? snapshot.data() : null;
+}
+
+async function createUserProfile(user, username, contactEmail, authEmail) {
+  const usernameLower = normalizeUsername(username);
+  const displayName = usernameLower || user.displayName || "usuario";
+
+  await setDoc(
+    doc(db, "users", user.uid),
+    {
+      uid: user.uid,
+      displayName,
+      username: usernameLower,
+      usernameLower,
+      hasContactEmail: Boolean(contactEmail),
+      photoURL: user.photoURL || "",
+      spotifyConnected: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
   );
 
-  const snapshot = await getDocs(usernameQuery);
+  if (contactEmail) {
+    await setDoc(
+      doc(db, "users", user.uid, "private", "account"),
+      {
+        contactEmail,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+  }
 
-  if (snapshot.empty) {
+  await setDoc(
+    doc(db, "usernames", usernameLower),
+    {
+      uid: user.uid,
+      username: usernameLower,
+      usernameLower,
+      authEmail,
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp()
+    },
+    { merge: true }
+  );
+}
+
+async function buildAvailableUsername(base) {
+  const normalizedBase = normalizeUsername(base) || "usuario";
+  let candidate = normalizedBase.slice(0, 24);
+  let suffix = 1;
+
+  while (await getUsernameDoc(candidate)) {
+    suffix += 1;
+    const suffixText = String(suffix);
+    candidate = `${normalizedBase.slice(0, 24 - suffixText.length)}${suffixText}`;
+  }
+
+  return candidate;
+}
+
+/* ENTRAR COM E-MAIL OU USUARIO */
+async function getEmailFromUsername(username) {
+  const usernameData = await getUsernameDoc(username);
+
+  if (!usernameData) {
     throw new Error("USERNAME_NOT_FOUND");
   }
 
-  const userData = snapshot.docs[0].data();
-
-  if (!userData.email) {
+  if (!usernameData.authEmail) {
     throw new Error("EMAIL_NOT_FOUND");
   }
 
-  return userData.email;
+  return usernameData.authEmail;
 }
 
 if (loginForm) {
@@ -157,7 +220,7 @@ if (loginForm) {
 
       /*
         Se tiver @, entra como e-mail.
-        Se não tiver @, tenta buscar o username no Firestore.
+        Se nao tiver @, tenta buscar o username no Firestore.
       */
       if (!loginValue.includes("@")) {
         emailToLogin = await getEmailFromUsername(loginValue);
@@ -175,9 +238,9 @@ if (loginForm) {
       console.error("Erro ao fazer login:", error);
 
       if (error.message === "USERNAME_NOT_FOUND") {
-        showError("Usuário não encontrado.");
+        showError("Usuario nao encontrado.");
       } else if (error.message === "EMAIL_NOT_FOUND") {
-        showError("Esse usuário não possui e-mail cadastrado.");
+        showError("Esse usuario nao possui e-mail cadastrado.");
       } else {
         showError(getAuthErrorMessage(error));
       }
@@ -186,6 +249,89 @@ if (loginForm) {
       submitBtn.disabled = false;
       submitBtn.textContent = originalText;
     }
+  });
+}
+
+/* REGISTRO COM USUARIO E SENHA */
+if (registerForm) {
+  registerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    clearMessages();
+
+    const username = normalizeUsername(registerNameInput?.value);
+    const contactEmail = registerEmailInput?.value.trim().toLowerCase() || "";
+    const password = registerPasswordInput?.value || "";
+
+    if (!username || username.length < 3) {
+      showError("O nome de usuario precisa ter pelo menos 3 caracteres.");
+      return;
+    }
+
+    if (!/^[a-z0-9._]{3,24}$/.test(username)) {
+      showError("Use apenas letras, numeros, ponto ou underline no usuario.");
+      return;
+    }
+
+    if (password.length < 6) {
+      showError("A senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    const submitBtn = registerForm.querySelector("button[type='submit']");
+    const originalText = submitBtn.textContent;
+
+    try {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Criando conta...";
+
+      if (await getUsernameDoc(username)) {
+        showError("Esse nome de usuario ja esta em uso.");
+        return;
+      }
+
+      const authEmail = buildAuthEmail(username);
+      const credential = await createUserWithEmailAndPassword(auth, authEmail, password);
+
+      await updateProfile(credential.user, {
+        displayName: username
+      });
+
+      await createUserProfile(credential.user, username, contactEmail, authEmail);
+
+      showSuccess("Conta criada com sucesso!");
+
+      setTimeout(() => {
+        window.location.href = "onboarding.html";
+      }, 700);
+    } catch (error) {
+      console.error("Erro ao criar conta:", error);
+      showError(getAuthErrorMessage(error));
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  });
+}
+
+if (registerPasswordInput && passwordStrengthText) {
+  registerPasswordInput.addEventListener("input", () => {
+    const password = registerPasswordInput.value;
+    const score = [
+      password.length >= 6,
+      /[A-Z]/.test(password),
+      /[0-9]/.test(password),
+      /[^A-Za-z0-9]/.test(password)
+    ].filter(Boolean).length;
+
+    const labels = [
+      "A senha precisa ter pelo menos 6 caracteres.",
+      "Senha fraca.",
+      "Senha media.",
+      "Senha boa.",
+      "Senha forte."
+    ];
+
+    passwordStrengthText.textContent = labels[score];
   });
 }
 
@@ -225,6 +371,48 @@ if (googleBtn) {
   });
 }
 
+if (googleAuthBtn) {
+  googleAuthBtn.addEventListener("click", async () => {
+    clearMessages();
+
+    try {
+      googleAuthBtn.disabled = true;
+      googleAuthBtn.textContent = "Abrindo Google...";
+
+      const credential = await signInWithPopup(auth, provider);
+      const userRef = doc(db, "users", credential.user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        const baseUsername =
+          credential.user.email?.split("@")[0] ||
+          credential.user.displayName ||
+          "usuario";
+        const username = await buildAvailableUsername(baseUsername);
+
+        await createUserProfile(
+          credential.user,
+          username,
+          credential.user.email || "",
+          buildAuthEmail(username)
+        );
+      }
+
+      showSuccess("Conta Google conectada!");
+
+      setTimeout(() => {
+        window.location.href = "onboarding.html";
+      }, 700);
+    } catch (error) {
+      console.error("Erro no registro com Google:", error);
+      showError(getAuthErrorMessage(error));
+    } finally {
+      googleAuthBtn.disabled = false;
+      googleAuthBtn.textContent = "Criar conta com Google";
+    }
+  });
+}
+
 /* MOSTRAR / ESCONDER SENHA */
 if (togglePassword && passwordInput) {
   togglePassword.addEventListener("click", () => {
@@ -237,6 +425,16 @@ if (togglePassword && passwordInput) {
     );
   });
 }
+
+document.querySelectorAll(".toggle-password[data-target]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const target = document.getElementById(button.dataset.target);
+
+    if (!target) return;
+
+    target.type = target.type === "password" ? "text" : "password";
+  });
+});
 
 /* ESQUECI MINHA SENHA */
 const forgotPasswordLink = document.querySelector(".forgot-password");
@@ -255,7 +453,7 @@ if (forgotPasswordLink) {
 
     try {
       await sendPasswordResetEmail(auth, email);
-      showSuccess("Enviamos um link de recuperação para seu e-mail.");
+      showSuccess("Enviamos um link de recuperacao para seu e-mail.");
     } catch (error) {
       console.error("Erro ao recuperar senha:", error);
       showError(getAuthErrorMessage(error));
@@ -263,9 +461,9 @@ if (forgotPasswordLink) {
   });
 }
 
-/* SE JÁ ESTIVER LOGADO */
+/* SE JA ESTIVER LOGADO */
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    console.log("Usuário logado:", user.email);
+    console.log("Usuario logado:", user.email);
   }
 });
